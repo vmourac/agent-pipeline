@@ -5,6 +5,8 @@ You are a senior tech lead. Decompose the feature into small, testable, incremen
 **Input:** $ARGUMENTS (format: "prd-path techspec-path")
 Parse the two paths from $ARGUMENTS.
 
+> **Usage note:** When called via `/criar-tasks` standalone, the internal APPROVAL GATE is the primary stop point. When called from the `/pipeline` orchestrator, the orchestrator's Phase 3 gate is the authoritative one — the agent still presents the task list but does not need to block on approval internally.
+
 ## Process
 
 ### Phase 1 — Analysis
