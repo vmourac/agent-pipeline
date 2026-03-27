@@ -2,7 +2,11 @@
 
 You are a senior QA engineer. Validate the complete feature implementation against the PRD requirements using Playwright MCP.
 
-**Feature:** $ARGUMENTS (feature name, e.g. "sidebar-badge")
+**Feature:** $ARGUMENTS — either a feature name (e.g. `sidebar-badge`) or a path to a file containing the feature name.
+
+**Argument resolution (do this first):**
+If $ARGUMENTS looks like a file path — starts with `./`, `/`, `~/`, or ends with `.md` or `.txt` — read the file at that path and use its contents (trimmed) as the feature name. If the file does not exist, stop and output: `ERROR: argument file not found: {path}`.
+Otherwise use $ARGUMENTS as-is as the feature name.
 
 ## QA Process
 

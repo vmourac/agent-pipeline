@@ -3,135 +3,168 @@
 You are an orchestrator. Your job is to coordinate a sequence of specialized agents to take a feature from idea to tested implementation.
 
 **Feature request:** $ARGUMENTS
+
+**Argument resolution (do this first):**
+If $ARGUMENTS looks like a file path — starts with `./`, `/`, `~/`, or ends with `.md` or `.txt` — read the file at that path and use its full contents as the feature request string. If the file does not exist, stop and tell the user: "ERROR: argument file not found: {path}".
+Otherwise use $ARGUMENTS as-is.
+
 (Format: "feature-name: description of what to build")
-Parse the feature name (kebab-case, e.g. `sidebar-badge`) and description from $ARGUMENTS.
+Parse the feature name (kebab-case, e.g. `sidebar-badge`) and description from the resolved string.
 
 ---
 
 ## PHASE 1 — PRD Generation
 
-Read the full content of `.claude/commands/criar-prd.md`.
+Read the full content of `.claude/commands/criar-prd.md`. If that file does not exist, read `~/.claude/commands/criar-prd.md` instead. If neither exists, stop and tell the user: "ERROR: criar-prd.md not found in .claude/commands/ or ~/.claude/commands/. Run install.sh from the agent-pipeline repo or copy the file manually."
 
-Use the Agent tool to spawn the PRD agent:
-```
-Agent(
-  prompt: "[full content of criar-prd.md]\n\nFeature request: {feature-name}: {description}",
-  subagent_type: "general-purpose"
-)
-```
+Call the Agent tool with:
+- prompt: the full text of `criar-prd.md`, followed by a newline, followed by: `Feature request: {feature-name}: {description}`
+- subagent_type: "general-purpose"
 
-Wait for the agent to complete. Verify `tasks/prd-{feature}/prd.md` exists before continuing.
+Wait for the agent to return before doing anything else.
+
+**File verification:** Check that `tasks/prd-{feature}/prd.md` exists and is non-empty.
+- If it does not exist: tell the user "ERROR: PRD agent completed but prd.md was not created. Re-run /criar-prd {feature-name}: {description} manually, then resume the pipeline from Phase 2." Stop.
 
 ---
 
 ## PHASE 2 — TechSpec Generation
 
-Read the full content of `.claude/commands/criar-techspec.md`.
+Read the full content of `.claude/commands/criar-techspec.md`. If that file does not exist, read `~/.claude/commands/criar-techspec.md` instead. If neither exists, stop and report the missing file to the user.
 
-Use the Agent tool to spawn the TechSpec agent:
-```
-Agent(
-  prompt: "[full content of criar-techspec.md]\n\nArguments: tasks/prd-{feature}/prd.md",
-  subagent_type: "general-purpose"
-)
-```
+Call the Agent tool with:
+- prompt: the full text of `criar-techspec.md`, followed by a newline, followed by: `tasks/prd-{feature}/prd.md`
+- subagent_type: "general-purpose"
 
-Wait for completion. Verify `tasks/prd-{feature}/techspec.md` exists before continuing.
+Wait for the agent to return before doing anything else.
+
+**File verification:** Check that `tasks/prd-{feature}/techspec.md` exists and is non-empty.
+- If it does not exist: tell the user "ERROR: TechSpec agent completed but techspec.md was not created. Re-run /criar-techspec tasks/prd-{feature}/prd.md manually, then resume from Phase 3." Stop.
 
 ---
 
 ## PHASE 3 — Task Decomposition + Human Approval Gate
 
-Read the full content of `.claude/commands/criar-tasks.md`.
+Read the full content of `.claude/commands/criar-tasks.md`. If that file does not exist, read `~/.claude/commands/criar-tasks.md` instead. If neither exists, stop and report the missing file to the user.
 
-Use the Agent tool to spawn the Tasks agent:
-```
-Agent(
-  prompt: "[full content of criar-tasks.md]\n\nArguments: tasks/prd-{feature}/prd.md tasks/prd-{feature}/techspec.md",
-  subagent_type: "general-purpose"
-)
-```
+Call the Agent tool with:
+- prompt: the full text of `criar-tasks.md`, followed by a newline, followed by: `tasks/prd-{feature}/prd.md tasks/prd-{feature}/techspec.md`
+- subagent_type: "general-purpose"
 
-After the agent completes, verify:
-- `tasks/prd-{feature}/tasks.md` exists
-- `tasks/prd-{feature}/tasks/` directory contains individual task files
+Wait for the agent to return before doing anything else.
+
+**File verification:**
+- Check that `tasks/prd-{feature}/tasks.md` exists and is non-empty.
+- Check that `tasks/prd-{feature}/tasks/` directory contains at least one `.md` file.
+- If either check fails: tell the user "ERROR: Tasks agent completed but task files are missing. Re-run /criar-tasks manually, then resume from the approval gate below." Stop.
 
 Read `tasks/prd-{feature}/tasks.md` and present the full task list to the user.
 
 **APPROVAL GATE (authoritative):** Ask the user:
-> "The task list above will now be implemented one task at a time in isolated git branches (one branch per task). Each task runs in a clean context window and must pass all tests and a code review before the next task starts.
+> "The task list above will now be implemented one task at a time. Each task runs in an isolated git worktree with a fresh context window, and must pass all tests and a code review before the next task starts. After each task is approved, its branch is merged to main so the next task builds on it.
 >
 > Proceed with implementation? (yes / no)"
 
-If no: stop the pipeline here. The planning artifacts remain in `tasks/prd-{feature}/` for future use.
+If no: stop. Planning artifacts remain in `tasks/prd-{feature}/` for future use.
 
 ---
 
-## PHASE 4 — Task Implementation (one agent per task, worktree isolated)
+## PHASE 4 — Task Implementation (one agent per task, sequential, worktree isolated)
 
-Parse the ordered task list from `tasks/prd-{feature}/tasks.md`.
+Parse the ordered task list from `tasks/prd-{feature}/tasks.md`. Extract each task ID in dependency order (e.g. 1.0, 2.0, 3.0).
 
-Read the full content of `.claude/commands/executar-task.md` once (reuse for all tasks).
+Read the full content of `.claude/commands/executar-task.md`. If that file does not exist, read `~/.claude/commands/executar-task.md` instead. If neither exists, stop and report the missing file to the user. Reuse this content for all tasks — do not re-read the file per task.
 
-For each task **sequentially** (respect dependency order — do not parallelize):
+**CRITICAL: Process tasks one at a time. Do NOT call the Agent tool for task N+1 until task N has fully completed and its branch has been merged. This is a hard sequential requirement — parallelism will cause dependency failures.**
 
-1. Spawn implementation agent in isolated worktree:
+For each task, execute these steps **in order, waiting for each to complete before starting the next**:
+
+**Step A — Spawn implementation agent:**
+Call the Agent tool with:
+- prompt: the full text of `executar-task.md`, followed by a newline, followed by: `{feature} {task-id}`
+- subagent_type: "general-purpose"
+- isolation: "worktree"
+
+Wait for this agent to return a result. Do not proceed until it does.
+
+**Step B — Evaluate result:**
+
+The agent's final output will contain one of:
+- `TASK COMPLETE: {task-id}` — success
+- `TASK BLOCKED: {task-id} — {reason}` — the review loop exhausted retries; needs human intervention
+
+If `TASK BLOCKED`:
+- Report to user: "Task {task-id} is blocked after maximum review cycles. Reason: {reason}. Fix the issues manually or adjust the task definition, then re-run the pipeline from this task."
+- Stop the pipeline. Do not proceed to the next task.
+
+If the agent crashes, errors, or returns no recognizable output:
+- Report to user: "Task {task-id} agent failed unexpectedly. Check the worktree branch for partial changes. Resolve manually and re-run the pipeline from this task."
+- Stop the pipeline.
+
+**Step C — Merge task branch to main:**
+
+The worktree result includes the branch name. Run:
+```bash
+git merge {branch-name} --no-ff -m "feat: complete task {task-id} ({feature})"
 ```
-Agent(
-  prompt: "[full content of executar-task.md]\n\nArguments: {feature} {task-id}",
-  subagent_type: "general-purpose",
-  isolation: "worktree"
-)
-```
 
-2. Wait for the agent to complete (it will internally spawn the review agent and loop until approved).
+If the merge fails (conflicts):
+- Report to user: "Merge conflict merging task {task-id} branch. Resolve conflicts manually, complete the merge, then resume the pipeline from the next task."
+- Stop.
 
-3. Report result to user:
-   - ✅ `Task {task-id} complete — branch ready for merge`
-   - ❌ `Task {task-id} failed — stopping pipeline`
+After successful merge, report: ✅ `Task {task-id} complete and merged to main`
 
-4. If failed: stop. Do not proceed to next task. Report the error.
+Then proceed to the next task.
 
-5. After success: proceed to next task.
-
-> **Why sequential?** Tasks are ordered by dependency. Task 2.0 may import types or modules created in Task 1.0. Parallel execution would cause import failures and file conflicts.
+> **Why sequential + merge?** Tasks are dependency-ordered. Task 2.0 may import types or use modules created in Task 1.0. Each new worktree branches from main, so Task 1.0 must be merged before Task 2.0's worktree is created.
 
 ---
 
 ## PHASE 5 — QA Validation
 
-Read the full content of `.claude/commands/executar-qa.md`.
+Read the full content of `.claude/commands/executar-qa.md`. If that file does not exist, read `~/.claude/commands/executar-qa.md` instead. If neither exists, stop and report the missing file to the user.
 
-Spawn the QA agent (no worktree — runs against merged main):
-```
-Agent(
-  prompt: "[full content of executar-qa.md]\n\nFeature: {feature}",
-  subagent_type: "general-purpose"
-)
-```
+Call the Agent tool with:
+- prompt: the full text of `executar-qa.md`, followed by a newline, followed by: `{feature}`
+- subagent_type: "general-purpose"
 
-Read the QA report output.
+Wait for the agent to return before doing anything else.
 
-- If **PASSED** or **PASSED WITH ISSUES (low severity only)**: proceed to pipeline summary.
-- If **FAILED** or **REQUIRES BUGFIX**: list all bugs and proceed to Phase 6.
+Parse the QA report from the agent's output. Look for the Overall Status line:
+- **PASSED** → proceed to Pipeline Summary
+- **PASSED WITH ISSUES** → if all issues are LOW severity, proceed to Pipeline Summary with a note
+- **FAILED** or **REQUIRES BUGFIX** → extract each BUG-N entry and proceed to Phase 6
+
+If the agent's output contains no recognizable QA report:
+- Report to user: "QA agent returned no report. Ensure the dev server is running (`{dev-command from CLAUDE.md}`) and re-run /executar-qa {feature}."
+- Stop.
 
 ---
 
-## PHASE 6 — Bug Fixes (if needed, worktree isolated per bug)
+## PHASE 6 — Bug Fixes (worktree isolated per bug, max 3 QA rounds)
 
-Read the full content of `.claude/commands/executar-bugfix.md` once.
+Read the full content of `.claude/commands/executar-bugfix.md`. If that file does not exist, read `~/.claude/commands/executar-bugfix.md` instead. If neither exists, stop and report the missing file to the user.
 
-For each bug identified in the QA report (assign IDs: bugfix-1, bugfix-2, ...):
+Track QA round count, starting at 1. Maximum 3 QA rounds total (Phase 5 + re-runs here).
 
-```
-Agent(
-  prompt: "[full content of executar-bugfix.md]\n\nArguments: {feature} bugfix-{N}: {bug-description}",
-  subagent_type: "general-purpose",
-  isolation: "worktree"
-)
-```
+For each bug from the QA report (bugfix-1, bugfix-2, ...):
 
-After all bugs are fixed, re-run Phase 5 (QA) to confirm resolution.
+Call the Agent tool with:
+- prompt: the full text of `executar-bugfix.md`, followed by a newline, followed by: `{feature} bugfix-{N}: {bug-description}`
+- subagent_type: "general-purpose"
+- isolation: "worktree"
+
+Wait for the agent to return. The agent will output `BUGFIX COMPLETE: bugfix-{N}` or `BUGFIX BLOCKED: bugfix-{N} — {reason}`.
+
+If `BUGFIX BLOCKED`: record the bug as unresolved and continue with remaining bugs.
+
+After all bugfix agents complete, merge each resolved bugfix branch to main (same pattern as Phase 4 Step C).
+
+**Re-run QA (Phase 5)** to confirm resolution. Increment the QA round counter.
+
+If QA round counter reaches 3 and bugs remain:
+- Report to user: "Pipeline reached the maximum of 3 QA rounds. The following bugs remain unresolved: {list}. Manual intervention required."
+- Stop. Do not loop again.
 
 ---
 
@@ -144,9 +177,9 @@ Report to user:
 Phase 1 PRD:      ✅ tasks/prd-{feature}/prd.md
 Phase 2 TechSpec: ✅ tasks/prd-{feature}/techspec.md
 Phase 3 Tasks:    ✅ {N} tasks defined and approved
-Phase 4 Impl:     ✅ {N}/{N} tasks implemented
+Phase 4 Impl:     ✅ {N}/{N} tasks implemented and merged
 Phase 5 QA:       ✅ PASSED / ⚠️ {N} bugs found and fixed
 Phase 6 Bugfix:   ✅ {N} bugs resolved (or N/A)
 
-All task branches are ready for review and merge.
+Feature branch is fully merged to main and ready for PR.
 ```

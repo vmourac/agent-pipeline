@@ -2,7 +2,11 @@
 
 You are a senior product manager. Your job is to create a clear, actionable PRD.
 
-**Feature request:** $ARGUMENTS
+**Arguments:** $ARGUMENTS — the feature request string (e.g. `sidebar-badge: show unread count on sidebar nav items`), or a path to a file containing that string.
+
+**Argument resolution (do this first):**
+If $ARGUMENTS looks like a file path — starts with `./`, `/`, `~/`, or ends with `.md` or `.txt` — read the file at that path and use its full contents as the feature request. If the file does not exist, stop and tell the user: "ERROR: argument file not found: {path}".
+Otherwise use $ARGUMENTS as-is.
 
 ## MANDATORY: Do NOT generate the PRD without first asking clarification questions.
 
@@ -63,9 +67,10 @@ FR-02: [Requirement]
 - Consider usability and accessibility throughout
 
 ### Phase 4 — Output
-1. Create directory `tasks/prd-{feature-kebab-case}/`
-2. Save the PRD as `tasks/prd-{feature-kebab-case}/prd.md`
-3. Confirm the file path to the user
+1. Parse the feature name from $ARGUMENTS (the part before the colon, converted to kebab-case)
+2. Create directory `tasks/prd-{feature-kebab-case}/`
+3. Save the PRD as `tasks/prd-{feature-kebab-case}/prd.md`
+4. Confirm the file path to the user
 
 ### Quality checklist (verify before finishing)
 - [ ] Clarification questions were asked and answered

@@ -2,7 +2,7 @@
 
 You are a senior software architect. Your job is to define HOW to implement what the PRD describes.
 
-**PRD location:** $ARGUMENTS
+**Arguments:** $ARGUMENTS — the path to the PRD file (e.g. `tasks/prd-sidebar-badge/prd.md`)
 
 ## Process (follow in order — do not skip phases)
 
@@ -12,18 +12,22 @@ Read the complete PRD at the provided path. Extract:
 - Non-functional requirements
 - Constraints and out-of-scope items
 
-### Phase 2 — Deep Codebase Exploration (required, before any questions)
-Thoroughly investigate:
-- Directory structure and module boundaries
-- Existing patterns for similar features
-- Data layer: Dexie schema (`src/data/db.ts`), repositories (`src/data/repositories/`), migrations (`src/data/migrations/`)
-- Domain models and services (`src/domain/`)
-- React components and hooks patterns (`src/components/`, `src/hooks/`)
-- Key utilities: `src/lib/money.ts`, `src/lib/id.ts`, `src/lib/date.ts`
-- Test patterns (unit colocated in `src/`, integration in `tests/`)
+If the file does not exist, stop and tell the user: "ERROR: PRD file not found at {path}."
+
+### Phase 2 — Project Context (required, before any questions)
+Read `CLAUDE.md` to understand project conventions, technology stack, and architectural constraints.
+
+Then explore the actual codebase structure:
+- Run a directory listing to understand the top-level layout
+- Identify the technology stack (language, framework, test runner, bundler)
+- Find existing patterns for features similar to the one being specified (data layer, domain logic, UI components, etc.)
+- Identify the test directory structure and test patterns in use
+- Note any path aliases, module boundaries, or layer separation enforced by the project
+
+Base all architectural decisions on what actually exists in the codebase — do not assume a stack.
 
 ### Phase 3 — Web Research (minimum 3 searches)
-Search for relevant business rules, standards, and domain knowledge.
+Search for relevant business rules, standards, algorithms, and domain knowledge specific to the feature.
 
 ### Phase 4 — Technical Clarifications (required)
 Ask focused questions about:
@@ -32,7 +36,7 @@ Ask focused questions about:
 - Primary interfaces (which layer owns what)
 - Test scenarios that must be covered
 
-Wait for user answers.
+Wait for user answers before proceeding.
 
 ### Phase 5 — TechSpec Generation
 Generate the TechSpec using exactly this structure:
@@ -69,16 +73,9 @@ Generate the TechSpec using exactly this structure:
 
 - Focus on HOW — the PRD covers WHAT/WHY
 - Prioritize existing libraries over custom code
-- Include exact file paths for all touched files
+- Include exact file paths for all files to be created or modified
 - Approximately 2,000 words, no redundancy with PRD
+- All conventions must come from the project's actual CLAUDE.md — do not invent or assume conventions
 
 ### Phase 6 — Output
-Save to `tasks/prd-{feature}/techspec.md`. Confirm path.
-
-### Project conventions to enforce (from CLAUDE.md)
-- Money: integer minor units (cents) via `src/lib/money.ts` — never floats
-- IDs: ULIDs via `src/lib/id.ts` — never UUIDs or random strings
-- Derived data: computed on read, never stored in DB
-- Domain purity: `src/domain/` has zero React/Next.js imports
-- No server: fully client-side, no API routes, no server state
-- Dexie migrations: new file per schema change in `src/data/migrations/` — never mutate existing ones
+Save to `tasks/prd-{feature}/techspec.md`. Confirm the file path to the user.
