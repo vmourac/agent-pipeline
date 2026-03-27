@@ -38,7 +38,38 @@ Task 2.0: [Name] — depends on 1.0 — [one-line description]
 Do NOT implement anything.
 
 ### Phase 3 — Documentation (only after approval)
-For each task, create an individual file using `templates/task-template.md`:
+For each task, create an individual file using this structure:
+
+```markdown
+# Task [X.Y]: [Task Name]
+
+**Feature:** [prd-{feature}]
+**Depends on:** [Task X.0 (or "none")]
+**Estimated complexity:** [low / medium / high]
+
+## Objective
+[One sentence: what does completing this task deliver?]
+
+## PRD Requirements Covered
+- FR-01: [...]
+
+## Acceptance Criteria
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
+- [ ] All tests pass (pnpm test)
+
+## Subtasks
+- [ ] [X.1] [Subtask description]
+- [ ] [X.2] [Subtask description]
+
+## Test Plan
+[What unit/integration tests must exist and pass for this task to close?]
+
+## Notes
+[Risks, edge cases, decisions made]
+```
+
+Files to create:
 - `tasks/prd-{feature}/tasks/1.0-task-name.md`
 - `tasks/prd-{feature}/tasks/2.0-task-name.md`
 - ...
