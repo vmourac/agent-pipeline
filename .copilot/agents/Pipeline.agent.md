@@ -15,6 +15,19 @@ You are an orchestrator. Coordinate the following specialized agents to take a f
 
 ---
 
+## PHASE 0 — Prompt Classification
+
+Invoke the **Classifier Agent** with:
+```
+{feature-name}: {description}
+```
+
+Wait for it to finish. Check that `tasks/prd-{feature}/user-context.md` exists.
+If missing: continue to Phase 1 with this note to the user:
+> ⚠️ Classifier did not produce output. Proceeding without hints — downstream agents will ask their standard clarification questions.
+
+---
+
 ## PHASE 1 — PRD Generation
 
 Invoke the **PRD Agent** with:

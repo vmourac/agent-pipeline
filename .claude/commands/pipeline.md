@@ -13,6 +13,23 @@ Parse the feature name (kebab-case, e.g. `sidebar-badge`) and description from t
 
 ---
 
+## PHASE 0 — Prompt Classification
+
+Read the full content of `.claude/commands/classificar-input.md`. If that file does not exist, read `~/.claude/commands/classificar-input.md` instead. If neither exists:
+> ⚠️ classificar-input.md not found. Skipping classification — downstream agents will ask their standard clarification questions.
+Continue to Phase 1.
+
+Call the Agent tool with:
+- prompt: the full text of `classificar-input.md`, followed by a newline, followed by: `{feature-name}: {description}`
+- subagent_type: "general-purpose"
+
+Wait for the agent to return.
+
+Check that `tasks/prd-{feature}/user-context.md` exists. If missing, log a warning and continue — do not stop:
+> ⚠️ Classifier did not produce output. Proceeding without hints.
+
+---
+
 ## PHASE 1 — PRD Generation
 
 Read the full content of `.claude/commands/criar-prd.md`. If that file does not exist, read `~/.claude/commands/criar-prd.md` instead. If neither exists, stop and tell the user: "ERROR: criar-prd.md not found in .claude/commands/ or ~/.claude/commands/. Run install.sh from the agent-pipeline repo or copy the file manually."

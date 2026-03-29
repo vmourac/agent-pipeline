@@ -20,6 +20,8 @@ Always read:
 - `tasks/prd-{feature}/techspec.md`
 - `CLAUDE.md` — project conventions, test command, lint command
 
+Additionally, if `tasks/prd-{feature}/hints/review-hints.md` exists, read it now. Apply its guidance as additional review criteria on top of CLAUDE.md conventions.
+
 If context-id starts with `bugfix-`: do NOT look for a task file.
 Otherwise read: `tasks/prd-{feature}/tasks/{context-id}.md`
 

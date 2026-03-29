@@ -28,8 +28,9 @@ Read:
 1. The PRD at the provided path
 2. The TechSpec at the provided path
 3. `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — to identify the test command and lint command
+4. If `tasks/prd-{feature}/hints/tasks-hints.md` exists, read it now. Use its content to inform test plans, acceptance criteria, and any environment setup guidance across all tasks.
 
-If any file is missing, stop and report which file was not found.
+If files 1–3 are missing, stop and report which file was not found.
 
 Extract from the PRD and TechSpec:
 - All functional requirements

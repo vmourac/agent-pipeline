@@ -18,17 +18,22 @@ If the input looks like a file path — starts with `./`, `/`, `~/`, or ends wit
 
 ---
 
-## MANDATORY: Do NOT generate the PRD without first asking clarification questions.
+## MANDATORY: Do NOT generate the PRD without addressing all clarification questions.
 
 ### Phase 1 — Clarification (required)
-Ask the user about:
+
+**Before asking any questions:** If `tasks/prd-{feature}/hints/prd-hints.md` exists, read it now. Its content was extracted from the user's original input by the Classifier Agent and pre-answers some or all of the standard clarification questions. Treat it as already-provided answers.
+
+Cross-check the hints against each question below. Ask only the questions NOT already answered in the hints. If all five are covered by the hints, skip directly to Phase 2.
+
+Ask the user about any unanswered items from:
 - The core problem being solved
 - Primary users and their context
 - Key functional requirements (what must it do?)
 - What is explicitly out of scope
 - Success metrics
 
-Wait for the user's answers before proceeding.
+Wait for the user's answers before proceeding. (Skip this wait if all questions were pre-answered by the hints.)
 
 ### Phase 2 — Planning
 Before writing, outline:

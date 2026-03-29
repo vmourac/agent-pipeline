@@ -14,6 +14,8 @@ Read the complete PRD at the provided path. Extract:
 
 If the file does not exist, stop and tell the user: "ERROR: PRD file not found at {path}."
 
+Additionally, if `tasks/prd-{feature}/hints/techspec-hints.md` exists, read it now. Treat its content as user-supplied technical guidance — not authoritative specification. Apply it when making architectural decisions in Phase 5.
+
 ### Phase 2 — Project Context (required, before any questions)
 Read `CLAUDE.md` to understand project conventions, technology stack, and architectural constraints.
 

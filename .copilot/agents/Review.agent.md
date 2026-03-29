@@ -30,6 +30,8 @@ Always read:
 - `tasks/prd-{feature}/techspec.md`
 - `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — project conventions, test command, lint command
 
+Additionally, if `tasks/prd-{feature}/hints/review-hints.md` exists, read it now. Apply its content as additional review criteria alongside the project conventions from CLAUDE.md.
+
 If context-id starts with `bugfix-`: do NOT look for a task file.
 Otherwise read: `tasks/prd-{feature}/tasks/{context-id}-*.md` (glob for the task file)
 
