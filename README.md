@@ -1,10 +1,10 @@
 # Agent Pipeline
 
-Claude Code slash commands for AI-driven feature development.
+AI-driven feature development pipeline — available for both **Claude Code** and **GitHub Copilot (VS Code)**.
 
 ## Installation
 
-Clone the repo and run the install script to make all commands available globally in Claude Code:
+### Claude Code
 
 ```bash
 git clone https://github.com/vmourac/agent-pipeline.git
@@ -12,9 +12,19 @@ cd agent-pipeline
 ./install.sh
 ```
 
-Re-run `./install.sh` at any time to update. The script skips unchanged files and reports what was installed or updated.
+Commands are installed to `~/.claude/commands/` and become available as `/pipeline`, `/criar-prd`, etc. in any project.
 
-> Commands are installed to `~/.claude/commands/` and become available as `/pipeline`, `/criar-prd`, etc. in any project.
+### GitHub Copilot (VS Code)
+
+```bash
+git clone https://github.com/vmourac/agent-pipeline.git
+cd agent-pipeline
+./install-copilot.sh
+```
+
+Agents are installed to the VS Code user-level prompts directory and become available as custom agent modes in Copilot Chat. Re-run at any time to update.
+
+> **Requirements for Copilot pipeline:** A `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md`) in the target project documenting conventions, test command, and lint command. Playwright MCP configured for QA phase.
 
 ## Commands
 
@@ -226,3 +236,57 @@ tasks/
 - A `CLAUDE.md` in the target project documenting conventions, test command, and lint command
 - Playwright MCP configured for `/executar-qa`
 - Dev server running locally when QA is executed
+
+---
+
+## GitHub Copilot (VS Code) Pipeline
+
+The `.copilot/agents/` folder contains an equivalent pipeline for GitHub Copilot in VS Code, using the [custom agent](https://code.visualstudio.com/docs/copilot/copilot-customization) mechanism.
+
+### Agents
+
+| Agent | Standalone? | Description |
+| --- | --- | --- |
+| `Pipeline` | ✅ | Full orchestrated pipeline: PRD → TechSpec → Tasks → Implement → QA |
+| `PRD Agent` | ✅ | Generate a PRD with clarification questions |
+| `TechSpec Agent` | ✅ | Generate a TechSpec from a PRD |
+| `Tasks Agent` | ✅ | Decompose PRD+TechSpec into ordered tasks |
+| `Task Implementation Agent` | ✅ | Implement a single task with TDD + review loop in a git worktree |
+| `Review Agent` | ✅ | Code review against PRD/TechSpec/conventions |
+| `QA Agent` | ✅ | E2E QA via Playwright MCP |
+| `Bugfix Agent` | ✅ | Reproduce, fix, test, and review a bug in a git worktree |
+
+### How to use
+
+After running `./install-copilot.sh`:
+
+1. Open Copilot Chat in VS Code (`Ctrl+Alt+I`)
+2. Click the agent selector at the top of the chat panel
+3. Select **Pipeline**
+4. Type your feature request:
+   ```
+   user-notifications: add in-app notification bell with unread count and dismiss
+   ```
+
+To run individual phases manually, select the corresponding agent (e.g. **PRD Agent**) and provide only that phase's input.
+
+### Context isolation
+
+Each task implementation runs in its own **git worktree** (`.worktrees/{feature}-task-{id}/`), giving the Task Implementation Agent a clean branch and preventing interference between tasks. The Pipeline orchestrator calls each task agent as a **sub-agent** (isolated context window) — the agent only sees the files it reads from disk, not the orchestrator's conversation history.
+
+### Differences from the Claude Code version
+
+| Aspect | Claude Code | Copilot (VS Code) |
+| --- | --- | --- |
+| Entry point | `/pipeline "..."` slash command | Select **Pipeline** agent mode in chat |
+| Sub-agent spawning | `Agent tool` with `isolation: worktree` primitive | `agents:` field in frontmatter + `runSubagent` |
+| Worktree isolation | First-class `isolation: "worktree"` flag | Explicit `git worktree add` terminal commands |
+| Context isolation | Enforced by runtime | Enforced by sub-agent boundary + file-only state |
+| Global install | `~/.claude/commands/` | `~/.vscode-server/data/User/prompts/` (Linux) |
+
+### Requirements
+
+- A `CLAUDE.md`, `AGENTS.md`, or `.github/copilot-instructions.md` in the target project documenting conventions, test command, and lint command
+- Playwright MCP configured for the QA Agent
+- Dev server running locally when QA is executed
+- VS Code with GitHub Copilot Chat extension
