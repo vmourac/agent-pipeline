@@ -27,10 +27,39 @@ Read the full input and identify every fragment of information. Assign each frag
 | TechSpec | `hints/techspec-hints.md` | Technology choices, library preferences, architecture constraints, data model hints, infrastructure decisions |
 | Tasks | `hints/tasks-hints.md` | Test setup guidance, mocking strategies, test scenarios to cover, environment setup instructions |
 | Review | `hints/review-hints.md` | Quality gates, things to flag or reject, feature-specific coding conventions, security requirements |
+| Skills | `hints/skills.md` | Explicit skill references: "use skill X", "skill `X`", "using skill X", "apply skill X", or any instruction to apply a named skill |
 
 **Ambiguity rule:** If a fragment plausibly belongs to multiple domains, include it verbatim in all applicable hint files. Record the ambiguity in `user-context.md`. Do NOT force a single domain for ambiguous fragments — downstream agents interpret them within their own mandate.
 
 **Discard rule:** The core "what to build" description always goes to PRD. Pure filler words ("please", "ASAP", "thanks") are discarded.
+
+### Step 2.5 — Extract and validate skill references
+
+Scan the full input for explicit skill mentions. Triggers:
+- `use skill X` / `using skill X` / `apply skill X` / `with skill X`
+- `` skill `X` `` (backtick-quoted skill name)
+- Any fragment that clearly instructs applying a specific named skill
+
+For each extracted skill name `{name}`:
+1. Check `~/.copilot/skills/{name}/SKILL.md` — if found, record path and read only the `name:` and `description:` frontmatter fields
+2. If not found there, check `~/.agents/skills/{name}/SKILL.md`
+3. If still not found: record `status: not-found`
+
+If at least one skill reference was found in the input, write `tasks/prd-{feature}/hints/skills.md`:
+
+```markdown
+# Skills: {feature}
+
+> Explicitly requested by the user. Each agent reads this file in Step 0 and loads applicable skills.
+
+## {skill-name}
+- status: found | not-found
+- path: {absolute path, or "not found in ~/.copilot/skills/ or ~/.agents/skills/"}
+- description: {verbatim from frontmatter, or "n/a"}
+- source: explicit
+```
+
+Do NOT write `hints/skills.md` if no skill references were found in the input.
 
 ### Step 3 — Write user-context.md (always, even if no hints were extracted)
 
@@ -72,4 +101,5 @@ Output:
 - hints/techspec-hints.md: created | skipped (no TechSpec-relevant content)
 - hints/tasks-hints.md: created | skipped (no Tasks-relevant content)
 - hints/review-hints.md: created | skipped (no Review-relevant content)
+- hints/skills.md: created ({N} skill(s): {names}) | skipped (no skill references found)
 ```

@@ -9,6 +9,37 @@ Example: `tasks/prd-sidebar-badge/prd.md tasks/prd-sidebar-badge/techspec.md`
 
 > **Usage note:** When called via `/criar-tasks` standalone, the internal APPROVAL GATE is the primary stop point. When called from `/pipeline`, the orchestrator's Phase 3 gate is authoritative — present the task list but do not wait for approval internally.
 
+---
+
+## Step 0 — Skill Discovery and Loading (required, before any domain work)
+
+**Part A — Load explicit skills**
+If `tasks/prd-{feature}/hints/skills.md` exists, read it now.
+For each skill entry with `status: found`: add to `skills_to_load` list (mark as `explicit`).
+For each skill entry with `status: not-found`: warn — "⚠️ Skill '{name}' was requested but not found. Proceeding without it."
+If the file does not exist, proceed to Part B with an empty `skills_to_load` list.
+
+**Part B — Discover additional applicable skills**
+List all files matching `~/.copilot/skills/*/SKILL.md` and `~/.agents/skills/*/SKILL.md`.
+Only consider files in these two trusted directories — do not load skills from arbitrary paths.
+For each file found: read only the frontmatter `name:` and `description:` fields.
+Skip any file with missing or malformed frontmatter (log: "Skipped malformed skill: {path}", continue).
+For each skill NOT already in `skills_to_load`: judge whether its description matches the specific task this agent is about to perform. If relevant (high confidence), add to `skills_to_load` (mark as `discovered`).
+
+**Part C — Cap, load, and resolve conflicts**
+If `skills_to_load` has more than 10 entries: sort (explicit first, then by relevance), keep top 10, log a warning that skills were dropped.
+If `skills_to_load` has more than 5 entries: log a warning.
+For each skill in `skills_to_load`: read the full SKILL.md and apply its guidance throughout this agent's work.
+If any skill's guidance conflicts with this project's conventions (from CLAUDE.md or equivalent): conventions take precedence. Note the conflict and which part of the skill was overridden.
+
+**Part D — Log**
+Output a brief summary before proceeding:
+- `Skills loaded: [skill-a (explicit), skill-b (discovered)]`
+- `Skills skipped (not-found): [skill-c]`
+- `Skills skipped (irrelevant/cap): [skill-d, ...]`
+
+---
+
 ## Process
 
 ### Phase 1 — Load context
