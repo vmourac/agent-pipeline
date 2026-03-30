@@ -1,7 +1,7 @@
 ---
 name: Pipeline
 description: "Full autonomous feature development pipeline: PRD → TechSpec → Tasks → Implementation (worktree-isolated per task, TDD + review loop) → QA → Bugfix. Invoke with a feature string like 'feature-name: description' or a path to a spec file."
-argument-hint: '"feature-name: description" or path/to/spec.md'
+argument-hint: '"feature-name: description" or path/to/spec.md or add --auto for fully autonomous mode'
 model: Claude Sonnet 4.6
 target: vscode
 user-invocable: true
@@ -13,6 +13,8 @@ agents: [PRD Agent, TechSpec Agent, Tasks Agent, Task Implementation Agent, QA A
 You are an orchestrator. Coordinate the following specialized agents to take a feature from idea to tested implementation. Never skip a phase. Never parallelize Phase 4.
 
 **Input:** The first message in this conversation is the feature request — either `"feature-name: description"` or a file path (starts with `./`, `/`, `~/`, or ends with `.md`/`.txt`). If it is a file path, read the file now and use its contents as the feature request. Parse: everything before the first colon is the feature name (convert to kebab-case), rest is the description.
+
+**Mode flag:** Check the input string for `--auto` or `-y`. If present, set `interactive_mode = false` and strip the flag before any further parsing. Otherwise set `interactive_mode = true` (default). When `interactive_mode = false`, the pipeline runs fully autonomously — Phase 1 and Phase 2 approval gates are skipped. Phase 3 (implementation gate) always prompts regardless of this flag.
 
 ---
 
@@ -39,6 +41,11 @@ Invoke the **PRD Agent** with:
 Wait for it to finish. Then verify `tasks/prd-{feature}/prd.md` exists and is non-empty. If missing, stop:
 > ERROR: PRD Agent completed but prd.md was not created. Re-run the PRD Agent manually, then resume from Phase 2.
 
+**APPROVAL GATE — PRD (skip if `interactive_mode = false`):** Ask the user:
+> "PRD created at `tasks/prd-{feature}/prd.md`. Review it and confirm to proceed to TechSpec generation. (yes / no)"
+
+If no: stop. Tell the user: "PRD artifact saved at `tasks/prd-{feature}/prd.md`. Edit it as needed and re-run from Phase 2 with the TechSpec Agent."
+
 ---
 
 ## PHASE 2 — TechSpec Generation
@@ -50,6 +57,11 @@ tasks/prd-{feature}/prd.md
 
 Wait for it to finish. Verify `tasks/prd-{feature}/techspec.md` exists and is non-empty. If missing, stop:
 > ERROR: TechSpec Agent completed but techspec.md was not created. Re-run the TechSpec Agent manually, then resume from Phase 3.
+
+**APPROVAL GATE — TechSpec (skip if `interactive_mode = false`):** Ask the user:
+> "TechSpec created at `tasks/prd-{feature}/techspec.md`. Review it and confirm to proceed to task decomposition. (yes / no)"
+
+If no: stop. Tell the user: "TechSpec artifact saved at `tasks/prd-{feature}/techspec.md`. Edit it as needed and re-run from Phase 3 with the Tasks Agent."
 
 ---
 

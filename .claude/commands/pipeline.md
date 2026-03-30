@@ -8,6 +8,8 @@ You are an orchestrator. Your job is to coordinate a sequence of specialized age
 If $ARGUMENTS looks like a file path — starts with `./`, `/`, `~/`, or ends with `.md` or `.txt` — read the file at that path and use its full contents as the feature request string. If the file does not exist, stop and tell the user: "ERROR: argument file not found: {path}".
 Otherwise use $ARGUMENTS as-is.
 
+**Mode flag:** Check the resolved string for `--auto` or `-y`. If present, set `interactive_mode = false` and strip the flag from the string before any further parsing. Otherwise set `interactive_mode = true` (default). When `interactive_mode = false`, the pipeline runs fully autonomously — Phase 1 and Phase 2 approval gates are skipped. Phase 3 (implementation gate) always prompts regardless of this flag.
+
 (Format: "feature-name: description of what to build")
 Parse the feature name (kebab-case, e.g. `sidebar-badge`) and description from the resolved string.
 
@@ -43,6 +45,11 @@ Wait for the agent to return before doing anything else.
 **File verification:** Check that `tasks/prd-{feature}/prd.md` exists and is non-empty.
 - If it does not exist: tell the user "ERROR: PRD agent completed but prd.md was not created. Re-run /criar-prd {feature-name}: {description} manually, then resume the pipeline from Phase 2." Stop.
 
+**APPROVAL GATE — PRD (skip if `interactive_mode = false`):** Ask the user:
+> "PRD created at `tasks/prd-{feature}/prd.md`. Review it and confirm to proceed to TechSpec generation. (yes / no)"
+
+If no: stop. Tell the user: "PRD artifact saved at `tasks/prd-{feature}/prd.md`. Edit it as needed and re-run from Phase 2 with `/criar-techspec tasks/prd-{feature}/prd.md`."
+
 ---
 
 ## PHASE 2 — TechSpec Generation
@@ -57,6 +64,11 @@ Wait for the agent to return before doing anything else.
 
 **File verification:** Check that `tasks/prd-{feature}/techspec.md` exists and is non-empty.
 - If it does not exist: tell the user "ERROR: TechSpec agent completed but techspec.md was not created. Re-run /criar-techspec tasks/prd-{feature}/prd.md manually, then resume from Phase 3." Stop.
+
+**APPROVAL GATE — TechSpec (skip if `interactive_mode = false`):** Ask the user:
+> "TechSpec created at `tasks/prd-{feature}/techspec.md`. Review it and confirm to proceed to task decomposition. (yes / no)"
+
+If no: stop. Tell the user: "TechSpec artifact saved at `tasks/prd-{feature}/techspec.md`. Edit it as needed and re-run from Phase 3 with `/criar-tasks tasks/prd-{feature}/prd.md tasks/prd-{feature}/techspec.md`."
 
 ---
 
