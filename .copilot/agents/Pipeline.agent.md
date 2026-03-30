@@ -6,6 +6,7 @@ model: Claude Sonnet 4.6
 target: vscode
 user-invocable: true
 agents: [PRD Agent, TechSpec Agent, Tasks Agent, Task Implementation Agent, QA Agent, Bugfix Agent]
+---
 
 # Feature Development Pipeline Orchestrator
 

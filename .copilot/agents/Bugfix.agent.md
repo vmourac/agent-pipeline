@@ -6,6 +6,7 @@ model: Claude Sonnet 4.6
 target: vscode
 user-invocable: true
 agents: [Review Agent]
+---
 
 # Bugfix Agent
 

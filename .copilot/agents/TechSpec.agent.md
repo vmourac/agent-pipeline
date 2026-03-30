@@ -6,6 +6,7 @@ model: Claude Opus 4.6
 target: vscode
 user-invocable: true
 agents: []
+---
 
 # TechSpec Agent
 

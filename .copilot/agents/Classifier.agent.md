@@ -6,6 +6,7 @@ model: Claude Sonnet 4.6
 target: vscode
 user-invocable: false
 agents: []
+---
 
 # Classifier Agent
 
