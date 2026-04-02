@@ -1,6 +1,6 @@
 # GAP-04: Task Status Marker Format Inconsistency
 
-**Status:** Fixable  
+**Status:** Done  
 **Priority:** Low  
 **Affects:** Claude Code pipeline only
 

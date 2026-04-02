@@ -1,6 +1,6 @@
 # GAP-05: Review Agent Path Has No Global Fallback
 
-**Status:** Fixable  
+**Status:** Done  
 **Priority:** Medium  
 **Affects:** Claude Code pipeline only
 

@@ -1,6 +1,6 @@
 # GAP-02: Conventions File Fallback Chain Missing
 
-**Status:** Fixable  
+**Status:** Done  
 **Priority:** Medium  
 **Affects:** Claude Code pipeline only
 

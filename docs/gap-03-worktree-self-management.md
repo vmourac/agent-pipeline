@@ -1,6 +1,6 @@
 # GAP-03: Worktree Self-Management Missing in Task and Bugfix Agents
 
-**Status:** Fixable  
+**Status:** Done  
 **Priority:** Medium (safety/isolation impact for direct invocations)  
 **Affects:** Claude Code pipeline only
 
