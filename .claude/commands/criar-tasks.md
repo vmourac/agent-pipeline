@@ -46,7 +46,7 @@ Output a brief summary before proceeding:
 Read:
 1. The PRD at the provided path
 2. The TechSpec at the provided path
-3. `CLAUDE.md` — to identify the test command and lint command used in this project
+3. `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — to identify the test command and lint command used in this project
 4. If `tasks/prd-{feature}/hints/tasks-hints.md` exists, read it now. Use its content to inform test plans, acceptance criteria, and any environment setup guidance across all tasks.
 
 If files 1–3 are missing, stop and tell the user which file was not found.
@@ -56,7 +56,7 @@ Extract from the PRD and TechSpec:
 - All architectural decisions and component boundaries
 - Interfaces between components
 
-From `CLAUDE.md`, identify:
+From the conventions file, identify:
 - **Test command** (e.g. `pnpm test`, `npm test`, `pytest`)
 - **Lint command** (e.g. `pnpm lint`, `ruff check .`)
 
@@ -114,7 +114,7 @@ For each task, create an individual file using this structure:
 [Risks, edge cases, decisions made]
 ```
 
-Replace `{test-command}` with the actual command from CLAUDE.md (e.g. `pnpm test`).
+Replace `{test-command}` with the actual command from the conventions file (e.g. `pnpm test`).
 
 Files to create:
 - `tasks/prd-{feature}/tasks/1.0-task-name.md`

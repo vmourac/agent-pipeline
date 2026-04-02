@@ -48,7 +48,7 @@ If the file does not exist, stop and tell the user: "ERROR: PRD file not found a
 Additionally, if `tasks/prd-{feature}/hints/techspec-hints.md` exists, read it now. Treat its content as user-supplied technical guidance — not authoritative specification. Apply it when making architectural decisions in Phase 5.
 
 ### Phase 2 — Project Context (required, before any questions)
-Read `CLAUDE.md` to understand project conventions, technology stack, and architectural constraints.
+Read `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) to understand project conventions, technology stack, and architectural constraints.
 
 Then explore the actual codebase structure:
 - Run a directory listing to understand the top-level layout
@@ -108,7 +108,7 @@ Generate the TechSpec using exactly this structure:
 - Prioritize existing libraries over custom code
 - Include exact file paths for all files to be created or modified
 - Approximately 2,000 words, no redundancy with PRD
-- All conventions must come from the project's actual CLAUDE.md — do not invent or assume conventions
+- All conventions must come from the project's actual `CLAUDE.md`, `AGENTS.md`, or `.github/copilot-instructions.md` — do not invent or assume conventions
 
 ### Phase 6 — Output
 Save to `tasks/prd-{feature}/techspec.md`. Confirm the file path to the user.

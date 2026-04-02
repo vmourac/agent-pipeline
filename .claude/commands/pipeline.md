@@ -4,14 +4,18 @@ You are an orchestrator. Your job is to coordinate a sequence of specialized age
 
 **Feature request:** $ARGUMENTS
 
-**Argument resolution (do this first):**
-If $ARGUMENTS looks like a file path — starts with `./`, `/`, `~/`, or ends with `.md` or `.txt` — read the file at that path and use its full contents as the feature request string. If the file does not exist, stop and tell the user: "ERROR: argument file not found: {path}".
-Otherwise use $ARGUMENTS as-is.
+**Input resolution — do this before anything else:**
 
-**Mode flag:** Check the resolved string for `--auto` or `-y`. If present, set `interactive_mode = false` and strip the flag from the string before any further parsing. Otherwise set `interactive_mode = true` (default). When `interactive_mode = false`, the pipeline runs fully autonomously — Phase 1 and Phase 2 approval gates are skipped. Phase 3 (implementation gate) always prompts regardless of this flag.
+**Step 1 — Mode flag:** Scan $ARGUMENTS for `--auto` or `-y`. If found, set `interactive_mode = false` and remove the flag from the string. Otherwise set `interactive_mode = true`. When `interactive_mode = false`, Phase 1 and Phase 2 approval gates are skipped. Phase 3 always prompts regardless of this flag.
 
-(Format: "feature-name: description of what to build")
-Parse the feature name (kebab-case, e.g. `sidebar-badge`) and description from the resolved string.
+**Step 2 — File resolution:** If the stripped input looks like a file path (starts with `./`, `/`, `~/`, or ends with `.md` or `.txt`), read that file now and use its full contents as the feature request. If the file does not exist, stop: `ERROR: argument file not found: {path}`. Otherwise use the stripped input as-is.
+
+**Step 3 — Feature name** (evaluate in order, use the first that matches):
+1. Content starts with a short word or phrase followed by a colon (e.g. `weather-app: ...` or `My Feature: ...`) → use everything before the colon, converted to kebab-case.
+2. Content contains a Markdown heading (`# Heading text`) → use the first heading's text, converted to kebab-case.
+3. Neither → synthesize a concise kebab-case slug (2–4 words) that captures the core topic (e.g. `"Build a budget tracker with charts"` → `budget-tracker`).
+
+**Step 4 — Description:** Use the full resolved content (after removing `--auto`/`-y`) as the description. Pass it verbatim to all downstream agents — do not truncate or summarize.
 
 ---
 

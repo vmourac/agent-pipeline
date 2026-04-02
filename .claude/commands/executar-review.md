@@ -49,7 +49,7 @@ Output a brief summary before proceeding:
 Always read:
 - `tasks/prd-{feature}/prd.md`
 - `tasks/prd-{feature}/techspec.md`
-- `CLAUDE.md` — project conventions, test command, lint command
+- `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — project conventions, test command, lint command
 
 Additionally, if `tasks/prd-{feature}/hints/review-hints.md` exists, read it now. Apply its guidance as additional review criteria on top of CLAUDE.md conventions.
 
@@ -71,8 +71,8 @@ Restore the missing file and re-trigger the review.
 ```
 Stop.
 
-### Step 2 — Derive commands from CLAUDE.md
-From `CLAUDE.md`, identify the test command and lint command. If not specified, infer from `package.json`, `Makefile`, or `pyproject.toml`.
+### Step 2 — Derive commands from conventions file
+From the conventions file, identify the test command and lint command. If not specified, infer from `package.json`, `Makefile`, or `pyproject.toml`.
 
 ### Step 3 — Examine code changes
 ```bash
@@ -81,7 +81,7 @@ git diff --stat main...HEAD
 ```
 
 ### Step 4 — Project conventions conformance
-Read the conventions section of `CLAUDE.md` and check the diff against every convention listed there. Flag any violation.
+Read the conventions section of the conventions file and check the diff against every convention listed there. Flag any violation.
 
 Additionally check universally:
 - [ ] No debug statements (`console.log`, `print`, `debugger`, etc.) left in production code

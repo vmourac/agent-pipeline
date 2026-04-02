@@ -50,45 +50,51 @@ Output a brief summary before proceeding:
 
 ### Step 1 — Load context
 Read:
-- `CLAUDE.md` — project conventions, test command, lint command
+- `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — project conventions, test command, lint command
 - `tasks/prd-{feature}/prd.md` — expected behavior
 - `tasks/prd-{feature}/techspec.md` — intended design
 
 If any of these files do not exist, stop and output:
 `BUGFIX BLOCKED: {bugfix-id} — required context file missing: {filename}`
 
-### Step 2 — Derive commands from CLAUDE.md
-From `CLAUDE.md`, identify the test command and lint command. If not specified, infer from `package.json`, `Makefile`, or `pyproject.toml`.
+### Step 2 — Derive commands from conventions file
+From the conventions file, identify the test command and lint command. If not specified, infer from `package.json`, `Makefile`, or `pyproject.toml`.
 
-### Step 3 — Reproduce
+### Step 3 — Create git worktree (branch isolation)
+Run `git worktree add .worktrees/{feature}-{bugfix-id} -b feat/{feature}-{bugfix-id}`.
+If the branch already exists, run `git worktree add .worktrees/{feature}-{bugfix-id} feat/{feature}-{bugfix-id}` instead.
+
+All file reads, writes, test runs, and lint runs from this point forward happen inside `.worktrees/{feature}-{bugfix-id}/`.
+
+### Step 4 — Reproduce
 Write a failing test that reproduces the bug BEFORE touching any implementation code.
 Run the test command to confirm the test fails with the expected error.
 
 If you cannot reproduce the bug with a test, document why and proceed to Step 4 with extra caution.
 
-### Step 4 — Root cause analysis
+### Step 5 — Root cause analysis
 Identify the root cause. Do NOT apply workarounds — fix the underlying issue.
 
-### Step 5 — Fix implementation
+### Step 6 — Fix implementation
 Implement the minimal fix. Run the full test suite:
 - All tests must pass, including your new regression test.
 - If other tests now fail, fix those regressions before continuing.
 
-### Step 6 — Lint check
+### Step 7 — Lint check
 Run the lint command from Step 2. Fix all errors before continuing.
 
 ## Review loop (max 3 cycles)
 
 Initialize a review cycle counter at 0.
 
-### Step 7 — Spawn review agent
+### Step 8 — Spawn review agent
 Increment the cycle counter.
 
 If the cycle counter exceeds 3:
 - Output: `BUGFIX BLOCKED: {bugfix-id} — review rejected 3 times. Last rejection: {summary of last rejection reason}`
 - Stop.
 
-Read the full content of `.claude/commands/executar-review.md`.
+Read the full content of `.claude/commands/executar-review.md`. If that file does not exist, read `~/.claude/commands/executar-review.md` instead. If neither exists, output `BUGFIX BLOCKED: {bugfix-id} — executar-review.md not found` and stop.
 
 Call the Agent tool with:
 - prompt: the full text of `executar-review.md`, followed by a newline, followed by: `{feature} {bugfix-id}`
@@ -96,10 +102,10 @@ Call the Agent tool with:
 
 Wait for the agent to return before doing anything else.
 
-### Step 8 — Handle review outcome
+### Step 9 — Handle review outcome
 
 Parse the `**Verdict:**` line from the review agent's output.
 
 - **APPROVED** or **APPROVED WITH OBSERVATIONS**: Output `BUGFIX COMPLETE: {bugfix-id}`. Stop.
-- **REJECTED**: Fix every issue listed in the review's Issues Found section. Re-run Step 5 (tests) and Step 6 (lint). Then go back to Step 7.
-- **Unrecognizable output** (no `**Verdict:**` line found): treat as REJECTED with reason "review output malformed". Go back to Step 7.
+- **REJECTED**: Fix every issue listed in the review's Issues Found section. Re-run Step 6 (tests) and Step 7 (lint). Then go back to Step 8.
+- **Unrecognizable output** (no `**Verdict:**` line found): treat as REJECTED with reason "review output malformed". Go back to Step 8.
