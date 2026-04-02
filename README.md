@@ -31,6 +31,7 @@ Agents are installed to the VS Code user-level prompts directory and become avai
 | Command | Arguments | Description |
 | --- | --- | --- |
 | `/pipeline` | `"feature-name: description"` or `path/to/spec.md` | Full orchestrated pipeline: PRD → TechSpec → Tasks → Implement → QA |
+| `/classificar-input` | `"feature-name: description"` or `path/to/spec.md` | Pre-process input into per-domain hint files for downstream agents (called automatically by `/pipeline`) |
 | `/criar-prd` | `"feature-name: description"` or `path/to/spec.md` | Generate a PRD with clarification questions |
 | `/criar-techspec` | `tasks/prd-{feature}/prd.md` | Generate a TechSpec from a PRD |
 | `/criar-tasks` | `tasks/prd-{feature}/prd.md tasks/prd-{feature}/techspec.md` | Decompose PRD+TechSpec into ordered tasks |
@@ -44,6 +45,10 @@ Agents are installed to the VS Code user-level prompts directory and become avai
 ```mermaid
 flowchart TD
     User(["User<br>/pipeline 'feature-name: description'"])
+
+    subgraph Phase0["Phase 0 — Classify Input"]
+        CLASSIFY["classificar-input<br>arg: 'feature-name: description'<br>→ tasks/prd-{f}/hints/*.md"]
+    end
 
     subgraph Phase1["Phase 1 — PRD"]
         PRD["criar-prd<br>arg: 'feature-name: description'<br>→ tasks/prd-{f}/prd.md"]
@@ -82,7 +87,8 @@ flowchart TD
     DONE(["Pipeline Complete<br>feature merged to main"])
     MANUAL(["Manual intervention<br>required"])
 
-    User --> Phase1
+    User --> Phase0
+    Phase0 --> Phase1
     Phase1 --> Phase2
     Phase2 --> Phase3
     TASKS --> GATE
@@ -248,6 +254,7 @@ The `.copilot/agents/` folder contains an equivalent pipeline for GitHub Copilot
 | Agent | Standalone? | Description |
 | --- | --- | --- |
 | `Pipeline` | ✅ | Full orchestrated pipeline: PRD → TechSpec → Tasks → Implement → QA |
+| `Classifier Agent` | ❌ | Pre-process input into per-domain hint files (called by Pipeline, not user-invocable) |
 | `PRD Agent` | ✅ | Generate a PRD with clarification questions |
 | `TechSpec Agent` | ✅ | Generate a TechSpec from a PRD |
 | `Tasks Agent` | ✅ | Decompose PRD+TechSpec into ordered tasks |
