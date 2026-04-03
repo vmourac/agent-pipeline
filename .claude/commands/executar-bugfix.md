@@ -17,6 +17,20 @@ Example: `sidebar-badge bugfix-2: badge count shows NaN when no items exist`
 
 ---
 
+## CRITICAL RULES
+> Zero-tolerance. These rules govern all code written, reviewed, or validated by this agent.
+> Any violation is an automatic **REJECTED** outcome — no exceptions.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## Step 0 — Skill Discovery and Loading (required, before any domain work)
 
 **Part A — Load explicit skills**
@@ -110,3 +124,12 @@ Parse the `**Verdict:**` line from the review agent's output.
 - **APPROVED** or **APPROVED WITH OBSERVATIONS**: Output `BUGFIX COMPLETE: {bugfix-id}`. Stop.
 - **REJECTED**: Fix every issue listed in the review's Issues Found section. Re-run Step 6 (tests) and Step 7 (lint). Then go back to Step 8.
 - **Unrecognizable output** (no `**Verdict:**` line found): treat as REJECTED with reason "review output malformed". Go back to Step 8.
+
+---
+
+## Output Format
+
+| Signal | When |
+|--------|------|
+| `BUGFIX COMPLETE: {bugfix-id}` | Review approved (with or without observations) |
+| `BUGFIX BLOCKED: {bugfix-id} — {reason}` | Pre-flight failure, missing files, or 3× review rejection |

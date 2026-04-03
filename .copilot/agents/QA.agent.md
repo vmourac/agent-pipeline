@@ -19,6 +19,20 @@ If the input looks like a file path, read it and use its trimmed contents as the
 
 ---
 
+## CRITICAL RULES
+> Zero-tolerance. These rules govern all code written, reviewed, or validated by this agent.
+> Any violation is an automatic **REJECTED** outcome — no exceptions.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## Step 0 — Skill Discovery and Loading (required, before any domain work)
 
 **Part A — Load explicit skills**
@@ -123,3 +137,17 @@ Output exactly:
 ### Recommendation
 APPROVED FOR RELEASE | REQUIRES BUGFIX: [list critical/high bugs to fix before release]
 ```
+
+---
+
+## Output Format
+
+The QA Report block from Step 7 with one of these overall statuses:
+
+| Overall Status | Meaning |
+|----------------|---------|
+| `PASSED` | All requirements met, no bugs found |
+| `PASSED WITH ISSUES` | Low-severity issues only; pipeline may continue |
+| `FAILED` | Critical/high bugs found; triggers Phase 6 bugfix cycle |
+
+Recommendation line: `APPROVED FOR RELEASE` or `REQUIRES BUGFIX: [list]`

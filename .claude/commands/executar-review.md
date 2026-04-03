@@ -14,6 +14,20 @@ Parse the resolved string:
 
 ---
 
+## CRITICAL RULES
+> Zero-tolerance. These rules govern all code written, reviewed, or validated by this agent.
+> Any violation is an automatic **REJECTED** outcome — no exceptions.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## Step 0 — Skill Discovery and Loading (required, before any domain work)
 
 **Part A — Load explicit skills**
@@ -140,3 +154,15 @@ Output this block exactly, filling in each section:
 - REJECTED: any test failure, any CRITICAL or MAJOR issue, any security issue, TechSpec non-compliance
 - APPROVED WITH OBSERVATIONS: only MINOR issues, all tests pass, all acceptance criteria met
 - APPROVED: no issues, all tests pass, all criteria met
+
+---
+
+## Output Format
+
+Always produces the exact review block from Step 9:
+
+| Verdict | Conditions |
+|---------|------------|
+| `APPROVED` | No issues, all tests pass, all criteria met |
+| `APPROVED WITH OBSERVATIONS` | Minor issues only, all tests pass, all criteria met |
+| `REJECTED` | Any test failure, CRITICAL/MAJOR issue, security issue, or TechSpec non-compliance |

@@ -19,6 +19,20 @@ You are an orchestrator. Your job is to coordinate a sequence of specialized age
 
 ---
 
+## CRITICAL RULES
+> These rules constrain the target project's architecture. Every artifact this agent produces
+> must be consistent with them — never design or specify anything that violates them.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## PHASE 0 — Prompt Classification
 
 Read the full content of `.claude/commands/classificar-input.md`. If that file does not exist, read `~/.claude/commands/classificar-input.md` instead. If neither exists:
@@ -216,3 +230,10 @@ Phase 6 Bugfix:   ✅ {N} bugs resolved (or N/A)
 
 Feature branch is fully merged to main and ready for PR.
 ```
+
+---
+
+## Output Format
+
+On success, outputs the Pipeline Summary block above.
+On any phase failure, outputs `ERROR: {reason}` or a phase-specific blocked/stop message.

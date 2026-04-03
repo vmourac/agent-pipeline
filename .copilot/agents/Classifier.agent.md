@@ -23,6 +23,20 @@ Parse:
 
 ---
 
+## CRITICAL RULES
+> These rules constrain the target project's architecture. Every artifact this agent produces
+> must be consistent with them — never design or specify anything that violates them.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## Process
 
 ### Step 1 — Create output directory
@@ -114,3 +128,10 @@ Output:
 - hints/review-hints.md: created | skipped (no Review-relevant content)
 - hints/skills.md: created ({N} skill(s): {names}) | skipped (no skill references found)
 ```
+
+---
+
+## Output Format
+
+Always outputs the `## Classification Complete: {feature}` block from Step 5.
+On argument error: `CLASSIFIER FAILED: argument file not found: {path}`

@@ -16,6 +16,20 @@ You are a senior software architect. Your job is to define HOW to implement what
 
 ---
 
+## CRITICAL RULES
+> These rules constrain the target project's architecture. Every artifact this agent produces
+> must be consistent with them — never design or specify anything that violates them.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## Step 0 — Skill Discovery and Loading (required, before any domain work)
 
 **Part A — Load explicit skills**
@@ -122,3 +136,10 @@ Generate the TechSpec using exactly this structure:
 
 ### Phase 6 — Output
 Save to `tasks/prd-{feature}/techspec.md`. Confirm the file path to the user.
+
+---
+
+## Output Format
+
+Saves `tasks/prd-{feature}/techspec.md` and outputs the confirmed file path to the user.
+On missing PRD: `ERROR: PRD file not found at {path}`

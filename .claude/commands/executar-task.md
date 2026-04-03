@@ -12,6 +12,20 @@ Parse the resolved string: everything before the first space is the feature name
 
 ---
 
+## CRITICAL RULES
+> Zero-tolerance. These rules govern all code written, reviewed, or validated by this agent.
+> Any violation is an automatic **REJECTED** outcome — no exceptions.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## Step 0 — Skill Discovery and Loading (required, before any domain work)
 
 **Part A — Load explicit skills**
@@ -162,3 +176,12 @@ Parse the `**Verdict:**` line from the review agent's output.
 - **REJECTED**: Read `tasks/prd-{feature}/memory/{task-id}.md` to recall prior-attempt decisions and corrections before fixing anything. Then read the Issues Found section of the review. Fix every flagged issue. Update the **Errors / Corrections** section of the per-task memory with the new issue and fix. Re-run Step 8 (full test run) and Step 9 (lint). Then go back to Step 10.
 
 - **Unrecognizable output** (no `**Verdict:**` line found): treat as REJECTED with reason "review output malformed". Go back to Step 10.
+
+---
+
+## Output Format
+
+| Signal | When |
+|--------|------|
+| `TASK COMPLETE: {task-id}` | Review approved (with or without observations) |
+| `TASK BLOCKED: {task-id} — {reason}` | Pre-flight failure, missing files, unmet dependency, or 3× review rejection |

@@ -11,6 +11,20 @@ Example: `tasks/prd-sidebar-badge/prd.md tasks/prd-sidebar-badge/techspec.md`
 
 ---
 
+## CRITICAL RULES
+> These rules constrain the target project's architecture. Every artifact this agent produces
+> must be consistent with them — never design or specify anything that violates them.
+
+- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
+- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
+- **Domain purity:** `src/domain/` must have zero React/Next.js imports
+- **No server state:** no API routes, no server-side state — fully client-side
+- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
+- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
+- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
+
+---
+
 ## Step 0 — Skill Discovery and Loading (required, before any domain work)
 
 **Part A — Load explicit skills**
@@ -155,3 +169,13 @@ section (lowest task number) when the file exceeds 200 lines.
 - Each task must have an explicit test plan
 - No task should be "implement everything" — each must be independently deliverable
 - Ordering must strictly respect dependencies
+
+---
+
+## Output Format
+
+1. Presents the high-level task list for user approval (APPROVAL GATE — unless called from `/pipeline`).
+2. After approval, creates:
+   - `tasks/prd-{feature}/tasks/{X.0-task-name}.md` — one file per task
+   - `tasks/prd-{feature}/tasks.md` — ordered summary table
+   - `tasks/prd-{feature}/memory/MEMORY.md` — workflow memory bootstrap
