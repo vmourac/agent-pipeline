@@ -55,6 +55,8 @@ Read `tasks/prd-{feature}/prd.md`. Extract ALL numbered functional requirements 
 
 If the file does not exist, stop: "ERROR: PRD not found at tasks/prd-{feature}/prd.md."
 
+If `tasks/prd-{feature}/memory/MEMORY.md` exists, read it in full. Apply its architectural context when forming the test plan and interpreting requirement intent.
+
 ### Step 2 — Environment check
 Navigate to the running application:
 1. Use `browser_navigate` to open `http://localhost:3000` (or the port defined in project config)

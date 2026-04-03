@@ -59,8 +59,9 @@ Read in order:
 3. `tasks/prd-{feature}/techspec.md` — implementation spec
 4. `tasks/prd-{feature}/tasks.md` — full task list and dependency order
 5. `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — project conventions, test command, lint command
+6. If `tasks/prd-{feature}/memory/MEMORY.md` exists, read it in full. Treat its contents as trusted prior-task context — apply it to all implementation decisions without re-verifying what it states.
 
-If any of these files do not exist, output:
+If any of files 1–5 do not exist, output:
 `TASK BLOCKED: {task-id} — required context file missing: {filename}`
 and stop.
 
@@ -146,13 +147,15 @@ Wait for the Review Agent to return its full output.
 
 Parse the `**Verdict:**` line from the review output.
 
-- **APPROVED**: 
+- **APPROVED**:
+  - Append a `## Task {task-id} — {short task name}` section to `tasks/prd-{feature}/memory/MEMORY.md` (from the main project directory, not the worktree). Include 3–5 bullets covering: what was built, key conventions applied or discovered, any edge cases or gotchas, and files created/modified that downstream tasks should know about. Each bullet must be under 20 words. If MEMORY.md now exceeds 200 lines, delete the oldest `## Task X.Y` section (lowest task number) to stay within the limit.
   - Mark task complete in `tasks/prd-{feature}/tasks.md` by changing `[ ]` to `[x]` next to the task entry.
   - Output: `TASK COMPLETE: {task-id}` followed by `BRANCH: feat/{feature}-task-{task-id}`
   - Stop — you are done.
 
 - **APPROVED WITH OBSERVATIONS**:
   - Append the observations to the Notes section of the task file (inside the worktree).
+  - Append to `tasks/prd-{feature}/memory/MEMORY.md` (same format as APPROVED above; include the observations as one of the bullets).
   - Mark task complete in tasks.md.
   - Output: `TASK COMPLETE: {task-id}` followed by `BRANCH: feat/{feature}-task-{task-id}`
   - Stop.

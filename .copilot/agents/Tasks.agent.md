@@ -144,7 +144,24 @@ Also create a summary `tasks/prd-{feature}/tasks.md`:
 ...
 ```
 
+Also create the workflow memory directory and bootstrap file.
+
+Create `tasks/prd-{feature}/memory/MEMORY.md` with this exact content (replace `{feature}` with the actual feature name):
+
+```markdown
+# Workflow Memory: {feature}
+
+This file accumulates architectural discoveries, negotiated decisions,
+and learned conventions as tasks are implemented. Each task agent
+MUST read this file before starting and MUST append its discoveries
+upon completion.
+
+Soft limit: 200 lines. Compaction: delete the oldest `## Task X.Y`
+section (lowest task number) when the file exceeds 200 lines.
+```
+
 ### Quality constraints
+
 - Each task must have clear, verifiable acceptance criteria
 - Each task must have an explicit test plan
 - No task should be "implement everything" — each must be independently deliverable

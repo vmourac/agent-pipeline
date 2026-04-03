@@ -53,8 +53,9 @@ Read:
 - `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — project conventions, test command, lint command
 - `tasks/prd-{feature}/prd.md` — expected behavior
 - `tasks/prd-{feature}/techspec.md` — intended design
+- `tasks/prd-{feature}/memory/MEMORY.md` (if it exists) — apply its architectural context when identifying root causes and selecting fix approaches
 
-If any of these files do not exist, stop and output:
+If any of the first three files do not exist, stop and output:
 `BUGFIX BLOCKED: {bugfix-id} — required context file missing: {filename}`
 
 ### Step 2 — Derive commands from conventions file
