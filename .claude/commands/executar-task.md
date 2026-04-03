@@ -70,6 +70,25 @@ Read in order:
 If any of files 1–5 do not exist, stop immediately and output:
 `TASK BLOCKED: {task-id} — required context file missing: {filename}`
 
+**Frontmatter grace check:** After reading the task file (file 1), inspect whether its first line is `---`. If no YAML frontmatter block is present, prepend the following 10-field template to the task file **in the main project directory** (the worktree does not yet exist at this point):
+
+```yaml
+---
+id: "{task-id}"
+title: "{text of the # Task heading}"
+status: "pending"
+priority: 0
+depends_on: []
+agent: ""
+started_at: ""
+completed_at: ""
+verdict: ""
+attempts: 0
+---
+```
+
+Set `id` to the task ID string and `title` to the text of the `# Task X.Y: …` heading. Set `priority` to `0` (sentinel indicating it was not set during task generation). Log: `Frontmatter added (grace path): {task-file-path}`. Then continue normally.
+
 ### Step 2 — Derive commands from conventions file
 From the conventions file, identify:
 - **Test command** (e.g. `pnpm test`, `npm test`, `yarn test`, `pytest`, etc.)
@@ -87,6 +106,14 @@ Run `git worktree add .worktrees/{feature}-task-{task-id} -b feat/{feature}-task
 If the branch already exists, run `git worktree add .worktrees/{feature}-task-{task-id} feat/{feature}-task-{task-id}` instead.
 
 All file reads, writes, test runs, and lint runs from this point forward happen inside `.worktrees/{feature}-task-{task-id}/`.
+
+**Update frontmatter in main project directory:** After the worktree is successfully created, update these fields in the YAML frontmatter of the task file at `tasks/prd-{feature}/tasks/{task-id-filename}.md` in the **main project directory** (not the worktree copy):
+- `status`: `"in-progress"`
+- `agent`: `"Claude Code"`
+- `started_at`: current ISO 8601 timestamp (e.g. `"2026-04-03T14:32:00Z"`)
+- `attempts`: current integer value + 1
+
+Read the file, locate the `---` ... `---` frontmatter block, update only these four key-value lines, and write the file back. Do not alter any content outside the frontmatter block.
 
 Also initialize the per-task memory file in the **main project directory** (not the worktree). If `tasks/prd-{feature}/memory/{task-id}.md` does not already exist, create it now with this template:
 
@@ -154,6 +181,7 @@ Initialize a review cycle counter at 0.
 Increment the cycle counter.
 
 If the cycle counter exceeds 3:
+- Update the task file's YAML frontmatter in the **main project directory**: set `status` to `"blocked"`, `completed_at` to the current ISO 8601 timestamp, `verdict` to `"BLOCKED"`.
 - Output: `TASK BLOCKED: {task-id} — review rejected 3 times. Last rejection: {summary of last rejection reason}`
 - Stop. Do not attempt further review cycles.
 
@@ -169,9 +197,9 @@ Wait for this agent to return before doing anything else.
 
 Parse the `**Verdict:**` line from the review agent's output.
 
-- **APPROVED**: First, update `tasks/prd-{feature}/memory/{task-id}.md` (main project directory): write a 2–3 sentence summary of the final implementation state in the **Ready for Next Run** section, and note any follow-up concerns or caveats for downstream tasks. Then append a `## Task {task-id} — {short task name}` section to `tasks/prd-{feature}/memory/MEMORY.md` (from the main project directory, not the worktree). Include 3–5 bullets covering: what was built, key conventions applied or discovered, any edge cases or gotchas, and files created/modified that downstream tasks should know about. Each bullet must be under 20 words. If MEMORY.md now exceeds 200 lines, delete the oldest `## Task X.Y` section (lowest task number) to stay within the limit. Then mark task complete in `tasks/prd-{feature}/tasks.md` by changing `[ ]` to `[x]` on the task entry line. Output: `TASK COMPLETE: {task-id}`. Stop — you are done.
+- **APPROVED**: First, update the task file's YAML frontmatter in the **main project directory**: set `status` to `"done"`, `completed_at` to the current ISO 8601 timestamp, `verdict` to `"APPROVED"`. Then update `tasks/prd-{feature}/memory/{task-id}.md` (main project directory): write a 2–3 sentence summary of the final implementation state in the **Ready for Next Run** section, and note any follow-up concerns or caveats for downstream tasks. Then append a `## Task {task-id} — {short task name}` section to `tasks/prd-{feature}/memory/MEMORY.md` (from the main project directory, not the worktree). Include 3–5 bullets covering: what was built, key conventions applied or discovered, any edge cases or gotchas, and files created/modified that downstream tasks should know about. Each bullet must be under 20 words. If MEMORY.md now exceeds 200 lines, delete the oldest `## Task X.Y` section (lowest task number) to stay within the limit. Then mark task complete in `tasks/prd-{feature}/tasks.md` by changing `[ ]` to `[x]` on the task entry line. Output: `TASK COMPLETE: {task-id}`. Stop — you are done.
 
-- **APPROVED WITH OBSERVATIONS**: First, update the **Ready for Next Run** section of `tasks/prd-{feature}/memory/{task-id}.md` (same as APPROVED above). Then append the observations to the Notes section of `tasks/prd-{feature}/tasks/{task-id}.md`. Then append to `tasks/prd-{feature}/memory/MEMORY.md` (same format as APPROVED above; include the observations as one of the bullets). Mark task complete. Output: `TASK COMPLETE: {task-id}`. Stop.
+- **APPROVED WITH OBSERVATIONS**: First, update the task file's YAML frontmatter in the **main project directory**: set `status` to `"done"`, `completed_at` to the current ISO 8601 timestamp, `verdict` to `"APPROVED"`. Then update the **Ready for Next Run** section of `tasks/prd-{feature}/memory/{task-id}.md` (same as APPROVED above). Then append the observations to the Notes section of `tasks/prd-{feature}/tasks/{task-id}.md`. Then append to `tasks/prd-{feature}/memory/MEMORY.md` (same format as APPROVED above; include the observations as one of the bullets). Mark task complete. Output: `TASK COMPLETE: {task-id}`. Stop.
 
 - **REJECTED**: Read `tasks/prd-{feature}/memory/{task-id}.md` to recall prior-attempt decisions and corrections before fixing anything. Then read the Issues Found section of the review. Fix every flagged issue. Update the **Errors / Corrections** section of the per-task memory with the new issue and fix. Re-run Step 8 (full test run) and Step 9 (lint). Then go back to Step 10.
 

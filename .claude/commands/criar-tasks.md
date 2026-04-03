@@ -100,6 +100,19 @@ Do NOT implement anything.
 For each task, create an individual file using this structure:
 
 ```markdown
+---
+id: "{id}"
+title: "{task name}"
+status: "pending"
+priority: {N}
+depends_on: [{comma-separated quoted IDs, or empty}]
+agent: ""
+started_at: ""
+completed_at: ""
+verdict: ""
+attempts: 0
+---
+
 # Task [X.Y]: [Task Name]
 
 **Feature:** [prd-{feature}]
@@ -129,6 +142,15 @@ For each task, create an individual file using this structure:
 ```
 
 Replace `{test-command}` with the actual command from the conventions file (e.g. `pnpm test`).
+
+When populating the frontmatter for each task file:
+- `id`: the task ID string (e.g. `"1.0"`, `"2.0"`)
+- `title`: the human-readable task name
+- `status`: always `"pending"` on creation
+- `priority`: 1-based ordinal position of this task in the ordered task list (first task = 1, second = 2, etc.)
+- `depends_on`: YAML list of quoted task ID strings for each direct dependency (e.g. `["1.0"]`); use `[]` for tasks with no dependencies
+- `agent`, `started_at`, `completed_at`, `verdict`: empty strings on creation
+- `attempts`: integer `0` on creation
 
 Files to create:
 - `tasks/prd-{feature}/tasks/1.0-task-name.md`
@@ -163,6 +185,21 @@ Soft limit: 200 lines. Compaction: delete the oldest `## Task X.Y`
 section (lowest task number) when the file exceeds 200 lines.
 ```
 
+Also create `tasks/prd-{feature}/_meta.md` with the following content. Use the current ISO 8601 timestamp (e.g. `2026-04-03T14:32:00Z`) for the PRD, TechSpec, and Tasks rows — all three phases are complete at this point. Use the same timestamp value for all three rows.
+
+```markdown
+# Pipeline: {feature}
+
+| Phase | Status | Timestamp |
+|-------|--------|-----------|
+| PRD | complete | {ISO timestamp} |
+| TechSpec | complete | {ISO timestamp} |
+| Tasks | complete | {ISO timestamp} |
+| Implementation | pending | — |
+| QA | pending | — |
+| Bugfix | pending | — |
+```
+
 ### Quality constraints
 
 - Each task must have clear, verifiable acceptance criteria
@@ -179,3 +216,4 @@ section (lowest task number) when the file exceeds 200 lines.
    - `tasks/prd-{feature}/tasks/{X.0-task-name}.md` — one file per task
    - `tasks/prd-{feature}/tasks.md` — ordered summary table
    - `tasks/prd-{feature}/memory/MEMORY.md` — workflow memory bootstrap
+   - `tasks/prd-{feature}/_meta.md` — pipeline phase tracking table

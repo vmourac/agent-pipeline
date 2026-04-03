@@ -114,6 +114,8 @@ If no: stop. Planning artifacts remain in `tasks/prd-{feature}/` for future use.
 
 ## PHASE 4 — Task Implementation (sequential, worktree-isolated)
 
+**Update `tasks/prd-{feature}/_meta.md`:** Set the Implementation row: `Status` → `in-progress`, `Timestamp` → current ISO 8601 timestamp.
+
 Parse the ordered task list from `tasks/prd-{feature}/tasks.md`. Extract each task ID in dependency order (1.0, 2.0, 3.0...).
 
 **CRITICAL: Process tasks strictly one at a time. Do NOT invoke the next task until the current one is fully merged. Parallelism will cause dependency failures.**
@@ -152,9 +154,13 @@ On success, report: ✅ `Task {task-id} complete and merged to main`
 
 Then proceed to the next task.
 
+**Update `tasks/prd-{feature}/_meta.md`:** All tasks implemented and merged. Set the Implementation row: `Status` → `complete`, `Timestamp` → current ISO 8601 timestamp.
+
 ---
 
 ## PHASE 5 — QA Validation
+
+**Update `tasks/prd-{feature}/_meta.md`:** Set the QA row: `Status` → `in-progress`, `Timestamp` → current ISO 8601 timestamp.
 
 Invoke the **QA Agent** with:
 ```
@@ -162,9 +168,9 @@ Invoke the **QA Agent** with:
 ```
 
 Wait for it to finish. Parse the `**Overall Status:**` line from the output:
-- `PASSED` → proceed to Pipeline Summary
-- `PASSED WITH ISSUES` → if all issues are LOW severity, proceed with a note
-- `FAILED` or `REQUIRES BUGFIX` → extract BUG-N entries and proceed to Phase 6
+- `PASSED` → update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `complete`, `Timestamp` → current ISO 8601 timestamp. Then proceed to Pipeline Summary.
+- `PASSED WITH ISSUES` → if all issues are LOW severity: update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `complete`, `Timestamp` → current ISO 8601 timestamp. Then proceed to Pipeline Summary with a note.
+- `FAILED` or `REQUIRES BUGFIX` → extract BUG-N entries and proceed to Phase 6. (QA status remains `in-progress` until Phase 6 resolves it.)
 
 If no recognizable QA report is returned:
 > QA Agent returned no report. Ensure the dev server is running and re-run QA manually.
@@ -173,6 +179,8 @@ Stop.
 ---
 
 ## PHASE 6 — Bug Fixes (worktree-isolated per bug, max 3 QA rounds)
+
+**Update `tasks/prd-{feature}/_meta.md`:** Set the Bugfix row: `Status` → `in-progress`, `Timestamp` → current ISO 8601 timestamp.
 
 Track QA round count (Phase 5 = round 1). Maximum 3 total QA rounds.
 
@@ -192,7 +200,12 @@ git merge feat/{feature}-bugfix-{N} --no-ff -m "fix: resolve bugfix-{N} ({featur
 
 Re-run Phase 5 (QA). Increment QA round counter.
 
+Parse the re-run QA result:
+- **PASSED** or **PASSED WITH ISSUES** (all LOW): update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `complete`, Bugfix row `Status` → `complete`, both `Timestamp` → current ISO 8601 timestamp. Then proceed to Pipeline Summary.
+- **FAILED** or **REQUIRES BUGFIX**: loop back to spawn bugfix agents for remaining bugs.
+
 If QA round counter reaches 3 and bugs remain:
+- Update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `failed`, Bugfix row `Status` → `complete`, both `Timestamp` → current ISO 8601 timestamp.
 > Pipeline reached the maximum of 3 QA rounds. The following bugs remain unresolved: {list}. Manual intervention required.
 Stop.
 

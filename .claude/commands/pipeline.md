@@ -118,6 +118,8 @@ If no: stop. Planning artifacts remain in `tasks/prd-{feature}/` for future use.
 
 ## PHASE 4 — Task Implementation (one agent per task, sequential, worktree isolated)
 
+**Update `tasks/prd-{feature}/_meta.md`:** Set the Implementation row: `Status` → `in-progress`, `Timestamp` → current ISO 8601 timestamp.
+
 Parse the ordered task list from `tasks/prd-{feature}/tasks.md`. Extract each task ID in dependency order (e.g. 1.0, 2.0, 3.0).
 
 Read the full content of `.claude/commands/executar-task.md`. If that file does not exist, read `~/.claude/commands/executar-task.md` instead. If neither exists, stop and report the missing file to the user. Reuse this content for all tasks — do not re-read the file per task.
@@ -165,9 +167,13 @@ Then proceed to the next task.
 
 > **Why sequential + merge?** Tasks are dependency-ordered. Task 2.0 may import types or use modules created in Task 1.0. Each new worktree branches from main, so Task 1.0 must be merged before Task 2.0's worktree is created.
 
+**Update `tasks/prd-{feature}/_meta.md`:** All tasks implemented and merged. Set the Implementation row: `Status` → `complete`, `Timestamp` → current ISO 8601 timestamp.
+
 ---
 
 ## PHASE 5 — QA Validation
+
+**Update `tasks/prd-{feature}/_meta.md`:** Set the QA row: `Status` → `in-progress`, `Timestamp` → current ISO 8601 timestamp.
 
 Read the full content of `.claude/commands/executar-qa.md`. If that file does not exist, read `~/.claude/commands/executar-qa.md` instead. If neither exists, stop and report the missing file to the user.
 
@@ -178,9 +184,9 @@ Call the Agent tool with:
 Wait for the agent to return before doing anything else.
 
 Parse the QA report from the agent's output. Look for the Overall Status line:
-- **PASSED** → proceed to Pipeline Summary
-- **PASSED WITH ISSUES** → if all issues are LOW severity, proceed to Pipeline Summary with a note
-- **FAILED** or **REQUIRES BUGFIX** → extract each BUG-N entry and proceed to Phase 6
+- **PASSED** → update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `complete`, `Timestamp` → current ISO 8601 timestamp. Then proceed to Pipeline Summary.
+- **PASSED WITH ISSUES** → if all issues are LOW severity: update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `complete`, `Timestamp` → current ISO 8601 timestamp. Then proceed to Pipeline Summary with a note.
+- **FAILED** or **REQUIRES BUGFIX** → extract each BUG-N entry and proceed to Phase 6. (QA status remains `in-progress` until Phase 6 resolves it.)
 
 If the agent's output contains no recognizable QA report:
 - Report to user: "QA agent returned no report. Ensure the dev server is running (`{dev-command from CLAUDE.md}`) and re-run /executar-qa {feature}."
@@ -189,6 +195,8 @@ If the agent's output contains no recognizable QA report:
 ---
 
 ## PHASE 6 — Bug Fixes (worktree isolated per bug, max 3 QA rounds)
+
+**Update `tasks/prd-{feature}/_meta.md`:** Set the Bugfix row: `Status` → `in-progress`, `Timestamp` → current ISO 8601 timestamp.
 
 Read the full content of `.claude/commands/executar-bugfix.md`. If that file does not exist, read `~/.claude/commands/executar-bugfix.md` instead. If neither exists, stop and report the missing file to the user.
 
@@ -209,7 +217,12 @@ After all bugfix agents complete, merge each resolved bugfix branch to main (sam
 
 **Re-run QA (Phase 5)** to confirm resolution. Increment the QA round counter.
 
+Parse the re-run QA result:
+- **PASSED** or **PASSED WITH ISSUES** (all LOW): update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `complete`, Bugfix row `Status` → `complete`, both `Timestamp` → current ISO 8601 timestamp. Then proceed to Pipeline Summary.
+- **FAILED** or **REQUIRES BUGFIX**: loop back to spawn bugfix agents for remaining bugs.
+
 If QA round counter reaches 3 and bugs remain:
+- Update `tasks/prd-{feature}/_meta.md`: QA row `Status` → `failed`, Bugfix row `Status` → `complete`, both `Timestamp` → current ISO 8601 timestamp.
 - Report to user: "Pipeline reached the maximum of 3 QA rounds. The following bugs remain unresolved: {list}. Manual intervention required."
 - Stop. Do not loop again.
 
