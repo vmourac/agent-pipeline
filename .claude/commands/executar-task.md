@@ -51,6 +51,7 @@ Read in order:
 4. `tasks/prd-{feature}/tasks.md` — full task list and dependency order
 5. `CLAUDE.md` (or `AGENTS.md` / `.github/copilot-instructions.md` if absent) — project conventions, test command, lint command
 6. If `tasks/prd-{feature}/memory/MEMORY.md` exists, read it in full. Treat its contents as trusted prior-task context — apply it to all implementation decisions without re-verifying what it states.
+7. If `tasks/prd-{feature}/memory/{task-id}.md` exists and is non-empty, read it now. Treat it as your own prior scratchpad — apply the decisions and learnings it contains, and avoid repeating any corrections already documented there.
 
 If any of files 1–5 do not exist, stop immediately and output:
 `TASK BLOCKED: {task-id} — required context file missing: {filename}`
@@ -73,6 +74,30 @@ If the branch already exists, run `git worktree add .worktrees/{feature}-task-{t
 
 All file reads, writes, test runs, and lint runs from this point forward happen inside `.worktrees/{feature}-task-{task-id}/`.
 
+Also initialize the per-task memory file in the **main project directory** (not the worktree). If `tasks/prd-{feature}/memory/{task-id}.md` does not already exist, create it now with this template:
+
+```
+# Task Memory: {task-id}
+
+## Objective Snapshot
+<!-- What this task is trying to accomplish — fill on first run -->
+
+## Important Decisions
+<!-- Implementation choices and rationale — append during implementation -->
+
+## Learnings
+<!-- Patterns, gotchas, discoveries specific to this task -->
+
+## Files / Surfaces
+<!-- Files created or modified -->
+
+## Errors / Corrections
+<!-- Mistakes encountered and how they were corrected -->
+
+## Ready for Next Run
+<!-- State summary so a future attempt can resume without rediscovery -->
+```
+
 ### Step 5 — Task summary
 Before coding, output:
 - Task ID and name
@@ -81,6 +106,13 @@ Before coding, output:
 - Risks and uncertainties
 
 ## Implementation
+
+**Per-task memory:** Throughout Steps 6–9, maintain `tasks/prd-{feature}/memory/{task-id}.md` (main project directory, not the worktree):
+- Fill **Objective Snapshot** on first run if it is still a placeholder.
+- Record key implementation choices in **Important Decisions** as you make them.
+- Record each file created or modified in **Files / Surfaces**.
+- Record any error/correction pairs in **Errors / Corrections** as they occur.
+If the file exceeds 200 lines or 16 KB, compact each section to its key points before continuing.
 
 ### Step 6 — Approach plan
 Write a numbered step-by-step implementation plan before touching any file.
@@ -123,10 +155,10 @@ Wait for this agent to return before doing anything else.
 
 Parse the `**Verdict:**` line from the review agent's output.
 
-- **APPROVED**: Append a `## Task {task-id} — {short task name}` section to `tasks/prd-{feature}/memory/MEMORY.md` (from the main project directory, not the worktree). Include 3–5 bullets covering: what was built, key conventions applied or discovered, any edge cases or gotchas, and files created/modified that downstream tasks should know about. Each bullet must be under 20 words. If MEMORY.md now exceeds 200 lines, delete the oldest `## Task X.Y` section (lowest task number) to stay within the limit. Then mark task complete in `tasks/prd-{feature}/tasks.md` by changing `[ ]` to `[x]` on the task entry line. Output: `TASK COMPLETE: {task-id}`. Stop — you are done.
+- **APPROVED**: First, update `tasks/prd-{feature}/memory/{task-id}.md` (main project directory): write a 2–3 sentence summary of the final implementation state in the **Ready for Next Run** section, and note any follow-up concerns or caveats for downstream tasks. Then append a `## Task {task-id} — {short task name}` section to `tasks/prd-{feature}/memory/MEMORY.md` (from the main project directory, not the worktree). Include 3–5 bullets covering: what was built, key conventions applied or discovered, any edge cases or gotchas, and files created/modified that downstream tasks should know about. Each bullet must be under 20 words. If MEMORY.md now exceeds 200 lines, delete the oldest `## Task X.Y` section (lowest task number) to stay within the limit. Then mark task complete in `tasks/prd-{feature}/tasks.md` by changing `[ ]` to `[x]` on the task entry line. Output: `TASK COMPLETE: {task-id}`. Stop — you are done.
 
-- **APPROVED WITH OBSERVATIONS**: Append the observations to the Notes section of `tasks/prd-{feature}/tasks/{task-id}.md`. Then append to `tasks/prd-{feature}/memory/MEMORY.md` (same format as APPROVED above; include the observations as one of the bullets). Mark task complete. Output: `TASK COMPLETE: {task-id}`. Stop.
+- **APPROVED WITH OBSERVATIONS**: First, update the **Ready for Next Run** section of `tasks/prd-{feature}/memory/{task-id}.md` (same as APPROVED above). Then append the observations to the Notes section of `tasks/prd-{feature}/tasks/{task-id}.md`. Then append to `tasks/prd-{feature}/memory/MEMORY.md` (same format as APPROVED above; include the observations as one of the bullets). Mark task complete. Output: `TASK COMPLETE: {task-id}`. Stop.
 
-- **REJECTED**: Read the Issues Found section of the review. Fix every flagged issue. Re-run Step 8 (full test run) and Step 9 (lint). Then go back to Step 10.
+- **REJECTED**: Read `tasks/prd-{feature}/memory/{task-id}.md` to recall prior-attempt decisions and corrections before fixing anything. Then read the Issues Found section of the review. Fix every flagged issue. Update the **Errors / Corrections** section of the per-task memory with the new issue and fix. Re-run Step 8 (full test run) and Step 9 (lint). Then go back to Step 10.
 
 - **Unrecognizable output** (no `**Verdict:**` line found): treat as REJECTED with reason "review output malformed". Go back to Step 10.

@@ -56,6 +56,8 @@ Additionally, if `tasks/prd-{feature}/hints/review-hints.md` exists, read it now
 If context-id starts with `bugfix-`: do NOT look for a task file.
 Otherwise read: `tasks/prd-{feature}/tasks/{context-id}.md`
 
+If context-id does not start with `bugfix-` and `tasks/prd-{feature}/memory/{context-id}.md` exists and is non-empty, read it now. Use it to understand the implementer's decisions, what corrections were already made, and which files were modified.
+
 If any required file is missing, output:
 ```
 ## Code Review: {context-id}
