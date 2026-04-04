@@ -6,7 +6,6 @@ model: Claude Opus 4.6
 target: vscode
 user-invocable: true
 agents: []
----
 
 # Review Agent
 
@@ -20,61 +19,6 @@ If the input looks like a file path — starts with `./`, `/`, `~/`, or ends wit
 Parse:
 - feature-name: everything before the first space
 - context-id: everything after (task ID like `2.0` or bugfix ID like `bugfix-1`)
-
----
-
-## CRITICAL RULES
-> Zero-tolerance. These rules govern all code written, reviewed, or validated by this agent.
-> Any violation is an automatic **REJECTED** outcome — no exceptions.
-
-- **Money:** always integer minor units (cents) via `src/lib/money.ts` — never floats
-- **IDs:** always ULIDs via `src/lib/id.ts` — never UUIDs or `Math.random()`
-- **Domain purity:** `src/domain/` must have zero React/Next.js imports
-- **No server state:** no API routes, no server-side state — fully client-side
-- **Dexie migrations:** one file per schema change in `src/data/migrations/` — never mutate existing ones
-- **Tests must pass:** `pnpm test` must exit 0 before any APPROVE verdict
-- **Lint must be clean:** `pnpm lint` must exit 0 before any APPROVE verdict
-
----
-
-## Step 0 — Skill Discovery and Loading (required, before any domain work)
-
-**Part A — Load explicit skills**
-If `tasks/prd-{feature}/hints/skills.md` exists, read it now.
-For each skill entry with `status: found`: add to `skills_to_load` list (mark as `explicit`).
-For each skill entry with `status: not-found`: warn — "⚠️ Skill '{name}' was requested but not found. Proceeding without it."
-If the file does not exist, proceed to Part B with an empty `skills_to_load` list.
-
-**Part B — Discover additional applicable skills**
-List all files matching `~/.copilot/skills/*/SKILL.md` and `~/.agents/skills/*/SKILL.md`.
-Only consider files in these two trusted directories — do not load skills from arbitrary paths.
-For each file found: read only the frontmatter `name:` and `description:` fields.
-Skip any file with missing or malformed frontmatter (log: "Skipped malformed skill: {path}", continue).
-For each skill NOT already in `skills_to_load`: judge whether its description matches the specific task this agent is about to perform. If relevant (high confidence), add to `skills_to_load` (mark as `discovered`).
-
-**Part C — Cap, load, and resolve conflicts**
-If `skills_to_load` has more than 10 entries: sort (explicit first, then by relevance), keep top 10, log a warning that skills were dropped.
-If `skills_to_load` has more than 5 entries: log a warning.
-For each skill in `skills_to_load`: read the full SKILL.md and apply its guidance throughout this agent's work.
-If any skill's guidance conflicts with this project's conventions (from CLAUDE.md or equivalent): conventions take precedence. Note the conflict and which part of the skill was overridden.
-
-**Part D — Log**
-Output a brief summary before proceeding:
-- `Skills loaded: [skill-a (explicit), skill-b (discovered)]`
-- `Skills skipped (not-found): [skill-c]`
-- `Skills skipped (irrelevant/cap): [skill-d, ...]`
-
----
-
-## Step 0.5 — Feature Context
-
-If `tasks/prd-{feature}/context.md` exists, read it now.
-Extract and apply:
-- **Phase 1 Acceptance Criteria** → treat as mandatory review checklist items; the implementation being reviewed must satisfy all listed criteria to receive APPROVED.
-- **Phase 2 Architecture Decisions** → validate that the code matches these decisions; deviations require explicit justification or result in REJECTED.
-- **Phase 2 Integration Points** → verify that modified files match the expected integration points.
-
-If the file does not exist, continue — context.md is produced by upstream agents.
 
 ---
 
@@ -126,6 +70,16 @@ Additionally check universally:
 - [ ] TypeScript (if applicable): no untyped `any`, no unsafe type assertions without comment justification
 - [ ] No security issues (XSS, injection, path traversal, SSRF, etc.)
 - [ ] No sensitive data in logs or error messages
+
+**Additionally, verify test coverage by file type:**
+- **Domain/lib/hooks/data files:** If the task introduces new `.ts` files in `src/domain/`,
+  `src/lib/`, `src/hooks/`, or `src/data/`, check for corresponding `*.test.ts` or
+  `__tests__/*.test.ts` files. Missing unit tests for logic-bearing files is a MAJOR issue → REJECTED.
+- **Pure UI/rendering components:** Unit tests are optional if E2E tests provide coverage.
+  Only flag if acceptance criteria explicitly require unit tests.
+- **Test-only final task anti-pattern:** If this task contains ONLY test files with NO
+  corresponding new implementation files, flag as CRITICAL → REJECTED.
+  Exception: if the TechSpec explicitly defines this as an E2E test task.
 
 ### Step 5 — TechSpec alignment
 - [ ] Architecture matches specification
