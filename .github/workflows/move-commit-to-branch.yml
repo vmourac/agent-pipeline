@@ -1,0 +1,84 @@
+name: Move commit to new branch and revert from main
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Commit SHA to move to a new branch'
+        required: true
+        default: '321c56af2a46c177481d8ea3c882b0fcf6683217'
+      new_branch_name:
+        description: 'Name of the new branch to create for this commit'
+        required: true
+        default: 'feat/granularity-fix-plan'
+
+jobs:
+  move-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Validate commit exists
+        run: |
+          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
+          if ! git cat-file -e "${COMMIT_SHA}^{commit}" 2>/dev/null; then
+            echo "Error: Commit ${COMMIT_SHA} not found in history"
+            exit 1
+          fi
+          echo "Commit ${COMMIT_SHA} found: $(git log -1 --oneline ${COMMIT_SHA})"
+
+      - name: Check commit is on main
+        run: |
+          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
+          MAIN_SHA=$(git rev-parse origin/main)
+          if ! git merge-base --is-ancestor "${COMMIT_SHA}" "${MAIN_SHA}"; then
+            echo "Error: Commit ${COMMIT_SHA} is not an ancestor of main"
+            exit 1
+          fi
+          echo "Confirmed: commit is reachable from main"
+
+      - name: Create new branch from commit
+        run: |
+          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
+          NEW_BRANCH="${{ github.event.inputs.new_branch_name }}"
+          if git ls-remote --exit-code --heads origin "${NEW_BRANCH}" >/dev/null 2>&1; then
+            echo "Branch '${NEW_BRANCH}' already exists on origin — skipping creation"
+          else
+            git checkout -b "${NEW_BRANCH}" "${COMMIT_SHA}"
+            git push origin "${NEW_BRANCH}"
+            echo "Created branch '${NEW_BRANCH}' at ${COMMIT_SHA}"
+          fi
+
+      - name: Determine parent commit (main reset target)
+        id: parent
+        run: |
+          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
+          PARENT_SHA=$(git rev-parse "${COMMIT_SHA}^")
+          echo "parent_sha=${PARENT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Parent commit: $(git log -1 --oneline ${PARENT_SHA})"
+
+      - name: Reset main to parent commit
+        run: |
+          PARENT_SHA="${{ steps.parent.outputs.parent_sha }}"
+          git checkout main
+          git reset --hard "${PARENT_SHA}"
+          git push origin main --force
+          echo "main has been reset to ${PARENT_SHA}"
+
+      - name: Summary
+        run: |
+          echo "## Done" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Created branch \`${{ github.event.inputs.new_branch_name }}\` at commit \`${{ github.event.inputs.commit_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Reset \`main\` to commit \`${{ steps.parent.outputs.parent_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
