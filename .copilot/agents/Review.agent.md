@@ -79,7 +79,8 @@ Additionally check universally:
   Only flag if acceptance criteria explicitly require unit tests.
 - **Test-only final task anti-pattern:** If this task contains ONLY test files with NO
   corresponding new implementation files, flag as CRITICAL → REJECTED.
-  Exception: if the TechSpec explicitly defines this as an E2E test task.
+  Exception: this rejection may be waived ONLY if the TechSpec contains an explicit dedicated section (e.g., `## Testing Strategy`, `## E2E Tests`, or equivalent) that defines a standalone testing phase as a separate deliverable. A bare mention of Playwright, E2E, or test commands anywhere in the TechSpec does NOT qualify for this exception.
+- **Type-definition-only task:** If the task introduces only TypeScript `interface`/`type` declaration files with no executable logic (functions, hooks, components, or data operations), flag as MINOR — consider merging with the related behavior task. Exception: a dedicated types task is acceptable when the types are consumed by 3 or more other source files already tracked in `tasks/prd-{feature}/memory/`.
 
 ### Step 5 — TechSpec alignment
 - [ ] Architecture matches specification

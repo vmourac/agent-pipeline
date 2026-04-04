@@ -111,10 +111,21 @@ Read `tasks/prd-{feature}/tasks.md` and present the full task list to the user.
 - `fr_count` = number of FR-XX items in `tasks/prd-{feature}/prd.md`
 - `task_count` = number of tasks listed in `tasks/prd-{feature}/tasks.md`
 
-If `task_count < 4` AND `fr_count >= 4`, display this warning before the approval prompt:
+Always display the ratio before the approval prompt:
 ```
-⚠️ Warning: {task_count} tasks detected for a {fr_count}-FR feature.
-   Consider requesting more granular decomposition.
+📋 Task plan: {task_count} tasks for {fr_count} functional requirements.
+```
+
+If `task_count < fr_count`, display a warning (too few tasks — likely over-bundling):
+```
+⚠️ Warning: {task_count} tasks for {fr_count} FRs — fewer tasks than requirements suggests over-bundling.
+    Consider requesting more granular decomposition (target: {fr_count}–{fr_count * 2} tasks).
+```
+
+If `task_count > fr_count * 3` AND `fr_count >= 3`, display a warning (too many tasks — likely over-splitting):
+```
+⚠️ Warning: {task_count} tasks for {fr_count} FRs — more than 3× the FR count suggests over-splitting.
+    Consider merging tasks that only define types or empty stubs with the layer that uses them.
 ```
 
 **APPROVAL GATE (authoritative — 3-option with revision loop, max 2 revision cycles):**

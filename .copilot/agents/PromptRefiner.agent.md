@@ -105,14 +105,15 @@ Minimum one AC per FR. Each AC must describe observable UI behavior or measurabl
 **Section 8: Task Decomposition Guidance** (ALWAYS generated — never omitted)
 - Count the FR-XX items from Section 3: "This feature has {N} functional requirements."
 - Recommend layer-based task structure:
-  1. Scaffold (type definitions, constants, migrations)
+  1. Scaffold (type definitions, constants, migrations) — merge types into the layer that first uses them unless shared across 3+ layers
   2. Domain logic (`src/domain/`)
   3. Data persistence (`src/data/`)
   4. Hooks (`src/hooks/`)
   5. UI components (`src/components/`) — max 1-2 components per task
   6. Integration & routing — last
-- State the inline testing requirement explicitly: "Each task must include inline unit tests. Do not create a dedicated final test task unless the TechSpec explicitly defines an E2E test task."
-- Provide a concrete task count range: "Recommend {min}–{max} tasks total" (use N+1 as min, N×2 as max, where N = FR count)
+- State the minimum cohesion requirement: "Each task must deliver at least one unit of testable behavior — a working function, hook, component, or data operation. Tasks containing ONLY type definitions or empty stubs must be merged with the next logical layer."
+- State the inline testing requirement explicitly: "Each task must include inline unit tests. A dedicated final test task is only allowed if the TechSpec has an explicit dedicated testing section defining it as a separate deliverable phase — a bare mention of Playwright or E2E in the TechSpec does NOT qualify."
+- Provide a concrete task count range: "Recommend {min}–{max} tasks total" (use N+1 as min, N×2 as max, where N = FR count). Note: do not hardcap at 10 — use the formula range.
 - State: "Tasks must be completed sequentially — each task may depend on types or modules created by the prior."
 
 ---
@@ -170,10 +171,11 @@ Verify the generated file before outputting the result. Check:
 - [ ] Functional Requirements has ≥3 FR-XX items with specific, testable wording
 - [ ] Technical Constraints includes all mandatory CLAUDE.md rules (money, IDs, domain purity, Dexie)
 - [ ] Agent Instructions includes all 5 sub-sections (PRD, TechSpec, Tasks, Review, QA)
-- [ ] `### Tasks Agent` block explicitly states layer-first decomposition and inline testing requirement
+- [ ] `### Tasks Agent` block explicitly states layer-first decomposition, minimum cohesion rule, and inline testing requirement
 - [ ] Acceptance Criteria has ≥1 AC per FR-XX with observable, Playwright-testable behavior
-- [ ] Task Decomposition Guidance is present with: FR count, layer structure, inline test rule, task count range, sequential ordering
+- [ ] Task Decomposition Guidance is present with: FR count, layer structure, minimum cohesion rule, inline test rule, task count range (N+1 to N×2), sequential ordering
 - [ ] `## Task Decomposition Guidance` section is present in the output file
+- [ ] Task count range in Section 8 does NOT exceed fr_count × 2 on the high end and is NOT capped at 10 regardless of FR count
 
 If any check fails: revise the section before writing the file.
 
