@@ -1,6 +1,9 @@
 name: Move commit to new branch and revert from main
 
 on:
+  push:
+    branches:
+      - copilot/remove-commit-from-main-branch
   workflow_dispatch:
     inputs:
       commit_sha:
@@ -11,6 +14,11 @@ on:
         description: 'Name of the new branch to create for this commit'
         required: true
         default: 'feat/granularity-fix-plan'
+
+env:
+  # Defaults used when triggered by push (no inputs available)
+  DEFAULT_COMMIT_SHA: '321c56af2a46c177481d8ea3c882b0fcf6683217'
+  DEFAULT_NEW_BRANCH: 'feat/granularity-fix-plan'
 
 jobs:
   move-commit:
@@ -29,29 +37,29 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Resolve inputs
+        id: resolve
+        run: |
+          COMMIT_SHA="${{ github.event.inputs.commit_sha || env.DEFAULT_COMMIT_SHA }}"
+          NEW_BRANCH="${{ github.event.inputs.new_branch_name || env.DEFAULT_NEW_BRANCH }}"
+          echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "new_branch=${NEW_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "Using commit: ${COMMIT_SHA}"
+          echo "Target branch: ${NEW_BRANCH}"
+
       - name: Validate commit exists
         run: |
-          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
+          COMMIT_SHA="${{ steps.resolve.outputs.commit_sha }}"
           if ! git cat-file -e "${COMMIT_SHA}^{commit}" 2>/dev/null; then
             echo "Error: Commit ${COMMIT_SHA} not found in history"
             exit 1
           fi
           echo "Commit ${COMMIT_SHA} found: $(git log -1 --oneline ${COMMIT_SHA})"
 
-      - name: Check commit is on main
-        run: |
-          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
-          MAIN_SHA=$(git rev-parse origin/main)
-          if ! git merge-base --is-ancestor "${COMMIT_SHA}" "${MAIN_SHA}"; then
-            echo "Error: Commit ${COMMIT_SHA} is not an ancestor of main"
-            exit 1
-          fi
-          echo "Confirmed: commit is reachable from main"
-
       - name: Create new branch from commit
         run: |
-          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
-          NEW_BRANCH="${{ github.event.inputs.new_branch_name }}"
+          COMMIT_SHA="${{ steps.resolve.outputs.commit_sha }}"
+          NEW_BRANCH="${{ steps.resolve.outputs.new_branch }}"
           if git ls-remote --exit-code --heads origin "${NEW_BRANCH}" >/dev/null 2>&1; then
             echo "Branch '${NEW_BRANCH}' already exists on origin — skipping creation"
           else
@@ -63,22 +71,28 @@ jobs:
       - name: Determine parent commit (main reset target)
         id: parent
         run: |
-          COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
+          COMMIT_SHA="${{ steps.resolve.outputs.commit_sha }}"
           PARENT_SHA=$(git rev-parse "${COMMIT_SHA}^")
           echo "parent_sha=${PARENT_SHA}" >> "$GITHUB_OUTPUT"
           echo "Parent commit: $(git log -1 --oneline ${PARENT_SHA})"
 
       - name: Reset main to parent commit
         run: |
+          COMMIT_SHA="${{ steps.resolve.outputs.commit_sha }}"
           PARENT_SHA="${{ steps.parent.outputs.parent_sha }}"
-          git checkout main
-          git reset --hard "${PARENT_SHA}"
-          git push origin main --force
-          echo "main has been reset to ${PARENT_SHA}"
+          MAIN_SHA=$(git rev-parse origin/main)
+          if git merge-base --is-ancestor "${COMMIT_SHA}" "${MAIN_SHA}" && [ "${MAIN_SHA}" != "${PARENT_SHA}" ]; then
+            git checkout main
+            git reset --hard "${PARENT_SHA}"
+            git push origin main --force
+            echo "main has been reset to ${PARENT_SHA}"
+          else
+            echo "main is already at or past the target — no reset needed"
+          fi
 
       - name: Summary
         run: |
           echo "## Done" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Created branch \`${{ github.event.inputs.new_branch_name }}\` at commit \`${{ github.event.inputs.commit_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Reset \`main\` to commit \`${{ steps.parent.outputs.parent_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch \`${{ steps.resolve.outputs.new_branch }}\` points to commit \`${{ steps.resolve.outputs.commit_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`main\` reset to commit \`${{ steps.parent.outputs.parent_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
