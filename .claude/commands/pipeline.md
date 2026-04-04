@@ -17,6 +17,8 @@ You are an orchestrator. Your job is to coordinate a sequence of specialized age
 
 **Step 4 — Description:** Use the full resolved content (after removing `--auto`/`-y`) as the description. Pass it verbatim to all downstream agents — do not truncate or summarize.
 
+**Step 5 — Refined input tracking:** Initialize `refined_input_path = null`. This variable is set in Phase -0.5 if prompt refinement succeeds.
+
 ---
 
 ## CRITICAL RULES
@@ -33,6 +35,32 @@ You are an orchestrator. Your job is to coordinate a sequence of specialized age
 
 ---
 
+## PHASE -0.5 — Prompt Refinement
+
+Read the full content of `.claude/commands/refinar-prompt.md`. If that file does not exist, read `~/.claude/commands/refinar-prompt.md` instead. If neither exists:
+> ⚠️ refinar-prompt.md not found. Skipping prompt refinement — downstream agents will receive the original input.
+Continue to Phase 0.
+
+Call the Agent tool with:
+- prompt: the full text of `refinar-prompt.md`, followed by a newline, followed by: `{feature-name}: {description}`
+- subagent_type: "general-purpose"
+
+Wait for the agent to return.
+
+Check that `tasks/prd-{feature}/refined-prompt.md` exists and is non-empty.
+- If it exists: set `refined_input_path = tasks/prd-{feature}/refined-prompt.md`. All downstream agents (Phase 0 and Phase 1) will receive this path instead of the raw description.
+- If it does not exist: log a warning and use `{description}` for all phases:
+  > ⚠️ Prompt Refiner did not produce output. Proceeding with original input.
+
+**APPROVAL GATE — Refined Prompt (skip if `interactive_mode = false`):**
+If `refined_input_path` was set, read and display the refined prompt contents to the user. Ask:
+> "Refined prompt saved at `tasks/prd-{feature}/refined-prompt.md`. Review it — all downstream agents will receive this as their input. Proceed? (yes / skip)"
+>
+> - yes → proceed with refined-prompt.md
+> - skip → proceed with original description (set `refined_input_path = null`)
+
+---
+
 ## PHASE 0 — Prompt Classification
 
 Read the full content of `.claude/commands/classificar-input.md`. If that file does not exist, read `~/.claude/commands/classificar-input.md` instead. If neither exists:
@@ -40,7 +68,7 @@ Read the full content of `.claude/commands/classificar-input.md`. If that file d
 Continue to Phase 1.
 
 Call the Agent tool with:
-- prompt: the full text of `classificar-input.md`, followed by a newline, followed by: `{feature-name}: {description}`
+- prompt: the full text of `classificar-input.md`, followed by a newline, followed by: `{refined_input_path if set, otherwise: "{feature-name}: {description}"}`
 - subagent_type: "general-purpose"
 
 Wait for the agent to return.
@@ -55,7 +83,7 @@ Check that `tasks/prd-{feature}/user-context.md` exists. If missing, log a warni
 Read the full content of `.claude/commands/criar-prd.md`. If that file does not exist, read `~/.claude/commands/criar-prd.md` instead. If neither exists, stop and tell the user: "ERROR: criar-prd.md not found in .claude/commands/ or ~/.claude/commands/. Run install.sh from the agent-pipeline repo or copy the file manually."
 
 Call the Agent tool with:
-- prompt: the full text of `criar-prd.md`, followed by a newline, followed by: `Feature request: {feature-name}: {description}`
+- prompt: the full text of `criar-prd.md`, followed by a newline, followed by: `{refined_input_path if set, otherwise: "Feature request: {feature-name}: {description}"}`
 - subagent_type: "general-purpose"
 
 Wait for the agent to return before doing anything else.

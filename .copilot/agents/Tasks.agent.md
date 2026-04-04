@@ -65,6 +65,18 @@ Output a brief summary before proceeding:
 
 ---
 
+## Step 0.5 — Feature Context
+
+If `tasks/prd-{feature}/context.md` exists, read it now.
+Extract and apply:
+- **Phase 1 Acceptance Criteria** → use as the authoritative definition of done; each task's acceptance criteria must be traceable to at least one criterion listed here.
+- **Phase 1 Per-Agent Directives** targeting the Tasks Agent → treat as authoritative; apply when structuring task order and test scaffolding.
+- **Phase 2 Integration Points** → use when defining task boundaries and file assignments.
+
+If the file does not exist, continue — context.md is produced by upstream agents.
+
+---
+
 ## Process
 
 ### Phase 1 — Load context

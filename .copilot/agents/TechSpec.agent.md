@@ -59,6 +59,20 @@ Output a brief summary before proceeding:
 
 ---
 
+## Step 0.5 — Feature Context
+
+If `tasks/prd-{feature}/context.md` exists, read it now.
+Extract and apply:
+- **Phase 0 Skills Available** → cross-check with `skills_to_load`; load any listed skills not already loaded.
+- **Phase 0 Design Signals** → treat as authoritative design requirements; use when making component and styling decisions in Phase 5.
+- **Phase 0 Per-Agent Directives** targeting the TechSpec Agent → treat as authoritative requirements; apply when making architectural decisions.
+- **Phase 1 Acceptance Criteria** → use as the authoritative QA definition; ensure the TechSpec's Testing Strategy (Section 7) covers all listed criteria.
+- **Phase 1 Per-Agent Directives** targeting the TechSpec Agent → apply these in Phase 5 architecture decisions.
+
+If the file does not exist, continue — context.md is produced by upstream agents.
+
+---
+
 ## Process (follow in order — do not skip phases)
 
 ### Phase 1 — PRD Analysis (required)
@@ -136,6 +150,22 @@ Generate the TechSpec using exactly this structure:
 
 ### Phase 6 — Output
 Save to `tasks/prd-{feature}/techspec.md`. Confirm the file path to the user.
+
+### Phase 7 — Write context.md Phase 2 section
+
+Append the `## Phase 2` section to `tasks/prd-{feature}/context.md` (create if it doesn't exist):
+
+```markdown
+## Phase 2 — TechSpec
+
+### Architecture Decisions
+{3–5 bullet summary of the key architectural choices made: state management, data layer pattern, component structure, library choices. Be specific.}
+
+### Integration Points
+{Exact file paths of all files to be created or modified, derived from Section 5 (Integration Points) of the TechSpec.}
+```
+
+If `context.md` already has a `## Phase 2` section (re-run), replace it.
 
 ---
 

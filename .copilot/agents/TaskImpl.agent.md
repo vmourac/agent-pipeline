@@ -64,6 +64,18 @@ Output a brief summary before proceeding:
 
 ---
 
+## Step 0.5 — Feature Context
+
+If `tasks/prd-{feature}/context.md` exists, read it now.
+Extract and apply:
+- **Phase 1 Acceptance Criteria** → these are the agreed QA definition of done; your implementation must satisfy all listed criteria.
+- **Phase 2 Architecture Decisions** → treat as constraints; your implementation must match these decisions.
+- **Phase 2 Integration Points** → confirm your task touches the right files and only the listed files where possible.
+
+If the file does not exist, continue — context.md is produced by upstream agents.
+
+---
+
 ## Pre-flight (all required)
 
 ### Step 1 — Load all context

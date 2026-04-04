@@ -57,6 +57,18 @@ Output a brief summary before proceeding:
 
 ---
 
+## Step 0.5 — Feature Context
+
+If `tasks/prd-{feature}/context.md` exists, read it now.
+Extract and apply:
+- **Phase 1 Acceptance Criteria** → treat as mandatory review checklist items; the implementation must satisfy all criteria to receive APPROVED.
+- **Phase 2 Architecture Decisions** → validate that the code matches; deviations without justification result in REJECTED.
+- **Phase 2 Integration Points** → verify modified files match the expected list.
+
+If the file does not exist, continue — context.md is produced by upstream agents.
+
+---
+
 ## Review Process (all steps mandatory)
 
 ### Step 1 — Load context

@@ -44,6 +44,10 @@ Read the full input and identify every fragment of information. Assign each frag
 | Tasks | `hints/tasks-hints.md` | Test setup guidance, mocking strategies, test scenarios to cover, environment setup instructions |
 | Review | `hints/review-hints.md` | Quality gates, things to flag or reject, feature-specific coding conventions, security requirements |
 | Skills | `hints/skills.md` | Explicit skill references: "use skill X", "skill `X`", "using skill X", "apply skill X", or any instruction to apply a named skill |
+| Agent Instructions → PRD | `hints/prd-hints.md` | Content from a `## Agent Instructions > ### PRD Agent` section (e.g., from a refined-prompt.md) |
+| Agent Instructions → TechSpec | `hints/techspec-hints.md` | Content from a `## Agent Instructions > ### TechSpec Agent` section |
+| Agent Instructions → Tasks/QA | `hints/tasks-hints.md` | Content from `## Agent Instructions > ### Tasks Agent` or `### QA Agent` sections — test scenarios and environment setup |
+| Acceptance Criteria | `hints/review-hints.md` AND `hints/tasks-hints.md` | Content from a `## Acceptance Criteria` section — quality gates, QA definition of done, and test scenarios |
 
 **Ambiguity rule:** If a fragment plausibly belongs to multiple domains, include it verbatim in all applicable hint files. Record the ambiguity in `user-context.md`. Do NOT force a single domain for ambiguous fragments — downstream agents interpret them within their own mandate.
 
@@ -96,6 +100,30 @@ Save `tasks/prd-{feature}/user-context.md`:
 
 This file is for debugging only. No downstream agent reads it during execution.
 
+### Step 3.5 — Write context.md Phase 0 section
+
+Append (or create) `tasks/prd-{feature}/context.md` with the Phase 0 section:
+
+```markdown
+# Feature Context: {feature}
+
+<!-- Append-only. Written by: Classifier (Phase 0), PRD Agent (Phase 1), TechSpec Agent (Phase 2). -->
+<!-- Read by all agents at Step 0.5. Treat each section as authoritative for its phase. -->
+
+## Phase 0 — Classification
+
+### Skills Available
+{For each skill in hints/skills.md with status: found: "- {name}: {path}" — or "None detected."}
+
+### Design Signals
+{Any design/UI-related fragments identified during classification — or "None detected."}
+
+### Per-Agent Directives
+{Verbatim content from any `## Agent Instructions` sub-sections found in the input — or "None."}
+```
+
+If `context.md` already exists (re-run scenario), overwrite only the `## Phase 0` section — do not touch Phase 1 or Phase 2 sections.
+
 ### Step 4 — Write hint files (only when non-empty)
 
 For each domain that has at least one classified fragment:
@@ -113,6 +141,7 @@ Output:
 ## Classification Complete: {feature}
 
 - user-context.md: written
+- context.md: Phase 0 section written
 - hints/prd-hints.md: created | skipped (no PRD-relevant content)
 - hints/techspec-hints.md: created | skipped (no TechSpec-relevant content)
 - hints/tasks-hints.md: created | skipped (no Tasks-relevant content)

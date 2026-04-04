@@ -69,6 +69,18 @@ Output a brief summary before proceeding:
 
 ---
 
+## Step 0.5 — Feature Context
+
+If `tasks/prd-{feature}/context.md` exists, read it now.
+Extract and apply:
+- **Phase 1 Acceptance Criteria** → the fix must not break any listed criterion; consider each an implicit regression test.
+- **Phase 2 Architecture Decisions** → ensure the bugfix stays within the established architecture; avoid introducing new deviations.
+- **Phase 2 Integration Points** → scope the fix to the established file list; flag any need to touch unlisted files as a risk.
+
+If the file does not exist, continue — context.md is produced by upstream agents.
+
+---
+
 ## Process
 
 ### Step 1 — Load context

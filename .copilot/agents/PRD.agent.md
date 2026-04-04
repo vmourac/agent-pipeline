@@ -62,6 +62,18 @@ Output a brief summary before proceeding:
 
 ---
 
+## Step 0.5 — Feature Context
+
+If `tasks/prd-{feature}/context.md` exists, read it now.
+Extract and apply from the `## Phase 0 — Classification` section:
+- **Per-Agent Directives** targeting the PRD Agent → treat as authoritative requirements for Phase 1 clarification; these pre-answer questions about scope, skills, and specific constraints.
+- **Skills Available** → cross-check with `skills_to_load`; load any listed skills not already loaded.
+- **Design Signals** → factor these into the Design & UI framing in the PRD overview.
+
+If the file does not exist, continue — context.md is produced by upstream agents.
+
+---
+
 ## MANDATORY: Do NOT generate the PRD without addressing all clarification questions.
 
 ### Phase 1 — Clarification (required)
@@ -131,12 +143,29 @@ FR-02: [Requirement]
 3. Save the PRD as `tasks/prd-{feature-kebab-case}/prd.md`
 4. Confirm the file path to the user
 
+### Phase 5 — Write context.md Phase 1 section
+
+Append the `## Phase 1` section to `tasks/prd-{feature}/context.md` (create the file if it doesn't exist):
+
+```markdown
+## Phase 1 — PRD
+
+### Acceptance Criteria
+{List each acceptance criterion from the refined-prompt.md if it exists, or derive one concrete criterion per FR-XX from the PRD just written. Format: "- [ ] {Playwright-testable criterion}"}
+
+### Per-Agent Directives
+{Any specific instructions from refined-prompt.md targeting TechSpec, Tasks, or QA agents — copy verbatim. Write "None." if not applicable.}
+```
+
+If `context.md` already has a `## Phase 1` section (re-run scenario), replace it.
+
 ### Quality checklist (verify before finishing)
 - [ ] Clarification questions were asked and answered
 - [ ] All functional requirements are numbered (FR-XX)
 - [ ] Document focuses on WHAT/WHY, not HOW
 - [ ] Under 2,000 words
 - [ ] File saved to correct path
+- [ ] context.md Phase 1 section written
 
 ---
 

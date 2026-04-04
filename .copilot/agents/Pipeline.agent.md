@@ -5,7 +5,7 @@ argument-hint: 'any description, path/to/spec.md, or free-form text — add --au
 model: Claude Sonnet 4.6
 target: vscode
 user-invocable: true
-agents: [Classifier Agent, PRD Agent, TechSpec Agent, Tasks Agent, Task Implementation Agent, QA Agent, Bugfix Agent]
+agents: [Prompt Refiner Agent, Classifier Agent, PRD Agent, TechSpec Agent, Tasks Agent, Task Implementation Agent, QA Agent, Bugfix Agent]
 ---
 
 # Feature Development Pipeline Orchestrator
@@ -25,6 +25,8 @@ You are an orchestrator. Coordinate the following specialized agents to take a f
 
 **Step 4 — Description:** Use the full resolved content (after removing `--auto`/`-y`) as the description. Pass it verbatim to all downstream agents — do not truncate or summarize.
 
+**Step 5 — Refined input tracking:** Initialize `refined_input_path = null`. This variable is set in Phase -0.5 if Prompt Refinement succeeds.
+
 ---
 
 ## CRITICAL RULES
@@ -41,11 +43,34 @@ You are an orchestrator. Coordinate the following specialized agents to take a f
 
 ---
 
+## PHASE -0.5 — Prompt Refinement
+
+Invoke the **Prompt Refiner Agent** with:
+```
+{feature-name}: {description}
+```
+
+Wait for it to finish.
+
+Check that `tasks/prd-{feature}/refined-prompt.md` exists and is non-empty.
+- If it exists: set `refined_input_path = tasks/prd-{feature}/refined-prompt.md`. All downstream agents (Phase 0 and Phase 1) will receive this path instead of the raw description.
+- If it does not exist: log a warning and continue using `{description}` for all phases:
+  > ⚠️ Prompt Refiner did not produce output. Proceeding with original input — downstream agents will receive the unrefined description.
+
+**APPROVAL GATE — Refined Prompt (skip if `interactive_mode = false`):**
+If `refined_input_path` was set, read and display the refined prompt to the user. Ask:
+> "Refined prompt saved at `tasks/prd-{feature}/refined-prompt.md`. Review it — all downstream agents will receive this as their input. Proceed? (yes / skip)"
+>
+> - yes → proceed with refined-prompt.md
+> - skip → proceed with original description (ignore refined-prompt.md, set `refined_input_path = null`)
+
+---
+
 ## PHASE 0 — Prompt Classification
 
 Invoke the **Classifier Agent** with:
 ```
-{feature-name}: {description}
+{refined_input_path if set, otherwise: "{feature-name}: {description}"}
 ```
 
 Wait for it to finish. Check that `tasks/prd-{feature}/user-context.md` exists.
@@ -58,7 +83,7 @@ If missing: continue to Phase 1 with this note to the user:
 
 Invoke the **PRD Agent** with:
 ```
-{feature-name}: {description}
+{refined_input_path if set, otherwise: "{feature-name}: {description}"}
 ```
 
 Wait for it to finish. Then verify `tasks/prd-{feature}/prd.md` exists and is non-empty. If missing, stop:

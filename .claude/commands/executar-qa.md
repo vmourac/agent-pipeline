@@ -53,6 +53,17 @@ Output a brief summary before proceeding:
 
 ---
 
+## Step 0.5 — Feature Context
+
+If `tasks/prd-{feature}/context.md` exists, read it now.
+Extract and apply:
+- **Phase 1 Acceptance Criteria** → primary test plan; verify each criterion explicitly and document its result. The QA report must include a pass/fail entry for each listed criterion.
+- **Phase 0 Per-Agent Directives** targeting the QA Agent → apply as test constraints (e.g., specific browser settings, timing expectations).
+
+If the file does not exist, continue — context.md is produced by upstream agents.
+
+---
+
 ## QA Process
 
 ### Step 1 — Load requirements
