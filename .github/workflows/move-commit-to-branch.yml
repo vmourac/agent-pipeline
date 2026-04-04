@@ -61,7 +61,12 @@ jobs:
           COMMIT_SHA="${{ steps.resolve.outputs.commit_sha }}"
           NEW_BRANCH="${{ steps.resolve.outputs.new_branch }}"
           if git ls-remote --exit-code --heads origin "${NEW_BRANCH}" >/dev/null 2>&1; then
-            echo "Branch '${NEW_BRANCH}' already exists on origin — skipping creation"
+            EXISTING_SHA=$(git ls-remote origin "refs/heads/${NEW_BRANCH}" | awk '{print $1}')
+            if [ "${EXISTING_SHA}" = "${COMMIT_SHA}" ]; then
+              echo "Branch '${NEW_BRANCH}' already exists at correct commit — skipping creation"
+            else
+              echo "Warning: branch '${NEW_BRANCH}' exists but points to ${EXISTING_SHA}, not ${COMMIT_SHA}"
+            fi
           else
             git checkout -b "${NEW_BRANCH}" "${COMMIT_SHA}"
             git push origin "${NEW_BRANCH}"
@@ -80,14 +85,19 @@ jobs:
         run: |
           COMMIT_SHA="${{ steps.resolve.outputs.commit_sha }}"
           PARENT_SHA="${{ steps.parent.outputs.parent_sha }}"
-          MAIN_SHA=$(git rev-parse origin/main)
-          if git merge-base --is-ancestor "${COMMIT_SHA}" "${MAIN_SHA}" && [ "${MAIN_SHA}" != "${PARENT_SHA}" ]; then
+          git fetch origin main:main
+          MAIN_SHA=$(git rev-parse main)
+          if [ "${MAIN_SHA}" = "${COMMIT_SHA}" ]; then
             git checkout main
             git reset --hard "${PARENT_SHA}"
             git push origin main --force
-            echo "main has been reset to ${PARENT_SHA}"
+            echo "main has been reset from ${COMMIT_SHA} to ${PARENT_SHA}"
+          elif [ "${MAIN_SHA}" = "${PARENT_SHA}" ]; then
+            echo "main is already at ${PARENT_SHA} — no reset needed"
           else
-            echo "main is already at or past the target — no reset needed"
+            echo "Warning: main is at ${MAIN_SHA}, which is neither ${COMMIT_SHA} nor ${PARENT_SHA}"
+            echo "Skipping reset to avoid unintentional data loss — please verify manually"
+            exit 1
           fi
 
       - name: Summary
