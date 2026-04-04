@@ -237,7 +237,7 @@ Parse the `**Verdict:**` line from the review output.
   - First, update the task file's YAML frontmatter in the **main project directory**: set `status` to `"done"`, `completed_at` to the current ISO 8601 timestamp, `verdict` to `"APPROVED"`.
   - Then update `tasks/prd-{feature}/memory/{task-id}.md` (main project directory): write a 2–3 sentence summary of the final implementation state in the **Ready for Next Run** section, and note any follow-up concerns or caveats for downstream tasks.
   - Append a `## Task {task-id} — {short task name}` section to `tasks/prd-{feature}/memory/MEMORY.md` (from the main project directory, not the worktree). Include 3–5 bullets covering: what was built, key conventions applied or discovered, any edge cases or gotchas, and files created/modified that downstream tasks should know about. Each bullet must be under 20 words. If MEMORY.md now exceeds 200 lines, delete the oldest `## Task X.Y` section (lowest task number) to stay within the limit.
-  - Mark task complete in `tasks/prd-{feature}/tasks.md` by changing `[ ]` to `[x]` next to the task entry.
+  - Mark task complete in `tasks/prd-{feature}/tasks.md` **in the main project directory (not the worktree)** by changing `[ ]` to `[x]` next to the task entry.
   - Output: `TASK COMPLETE: {task-id}` followed by `BRANCH: feat/{feature}-task-{task-id}`
   - Stop — you are done.
 
@@ -246,7 +246,7 @@ Parse the `**Verdict:**` line from the review output.
   - Then update the **Ready for Next Run** section of `tasks/prd-{feature}/memory/{task-id}.md` (same as APPROVED above).
   - Append the observations to the Notes section of the task file (inside the worktree).
   - Append to `tasks/prd-{feature}/memory/MEMORY.md` (same format as APPROVED above; include the observations as one of the bullets).
-  - Mark task complete in tasks.md.
+  - Mark task complete in `tasks/prd-{feature}/tasks.md` **in the main project directory (not the worktree)** by changing `[ ]` to `[x]` next to the task entry.
   - Output: `TASK COMPLETE: {task-id}` followed by `BRANCH: feat/{feature}-task-{task-id}`
   - Stop.
 
