@@ -57,18 +57,6 @@ Output a brief summary before proceeding:
 
 ---
 
-## Step 0.5 — Feature Context
-
-If `tasks/prd-{feature}/context.md` exists, read it now.
-Extract and apply:
-- **Phase 1 Acceptance Criteria** → treat as mandatory review checklist items; the implementation must satisfy all criteria to receive APPROVED.
-- **Phase 2 Architecture Decisions** → validate that the code matches; deviations without justification result in REJECTED.
-- **Phase 2 Integration Points** → verify modified files match the expected list.
-
-If the file does not exist, continue — context.md is produced by upstream agents.
-
----
-
 ## Review Process (all steps mandatory)
 
 ### Step 1 — Load context
@@ -116,6 +104,17 @@ Additionally check universally:
 - [ ] No hardcoded secrets, tokens, or credentials
 - [ ] TypeScript (if applicable): no untyped `any`, no unsafe type assertions without comment justification
 - [ ] No security issues (XSS, injection, path traversal, etc.)
+
+**Additionally, verify test coverage by file type:**
+- **Domain/lib/hooks/data files:** If the task introduces new `.ts` files in `src/domain/`,
+  `src/lib/`, `src/hooks/`, or `src/data/`, check for corresponding `*.test.ts` or
+  `__tests__/*.test.ts` files. Missing unit tests for logic-bearing files is a MAJOR issue → REJECTED.
+- **Pure UI/rendering components:** Unit tests are optional if E2E tests provide coverage.
+  Only flag if acceptance criteria explicitly require unit tests.
+- **Test-only final task anti-pattern:** If this task contains ONLY test files with NO
+  corresponding new implementation files, flag as CRITICAL → REJECTED.
+  Exception: this rejection may be waived ONLY if the TechSpec contains an explicit dedicated section (e.g., `## Testing Strategy`, `## E2E Tests`, or equivalent) that defines a standalone testing phase as a separate deliverable. A bare mention of Playwright, E2E, or test commands anywhere in the TechSpec does NOT qualify for this exception.
+- **Type-definition-only task:** If the task introduces only TypeScript `interface`/`type` declaration files with no executable logic (functions, hooks, components, or data operations), flag as MINOR — consider merging with the related behavior task. Exception: a dedicated types task is acceptable when the types are consumed by 3 or more other source files already tracked in `tasks/prd-{feature}/memory/`.
 
 ### Step 5 — TechSpec alignment
 - [ ] Architecture matches specification

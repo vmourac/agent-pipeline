@@ -94,6 +94,23 @@ Start the dev server (e.g. `pnpm dev`) and re-run QA.
 ```
 Stop — do not proceed.
 
+### Step 2.5 — Test Distribution Check
+
+Scan the project for logic files missing unit tests. List all `.ts` files in:
+`src/domain/`, `src/lib/`, `src/hooks/`, `src/data/` (excluding `.d.ts` and `.test.ts` files).
+
+For each: check for a corresponding `*.test.ts` or `__tests__/*.test.ts` file.
+Collect unmatched files → `ununit_files` list.
+
+Check if ANY `.test.ts` file exists anywhere in `src/`.
+If none found: set `is_e2e_only = true`.
+
+Record for Step 7 report:
+- If `ununit_files` is non-empty: add as OBSERVATION: `"Logic files without unit tests: {list}"`
+- If `is_e2e_only = true`: add as MAJOR CONCERN: `"🔴 MAJOR CONCERN: All tests are E2E-only. No unit tests found in src/. Code maintainability and regression risk are elevated."`
+
+This step is **observability only** — it adds notes to the report but does not change the PASSED/FAILED verdict.
+
 ### Step 3 — Functional E2E testing
 For each functional requirement in the PRD:
 - Use Playwright MCP tools: `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_fill_form`, `browser_select_option`, `browser_press_key`, `browser_network_requests`

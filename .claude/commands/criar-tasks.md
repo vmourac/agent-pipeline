@@ -54,18 +54,6 @@ Output a brief summary before proceeding:
 
 ---
 
-## Step 0.5 — Feature Context
-
-If `tasks/prd-{feature}/context.md` exists, read it now.
-Extract and apply:
-- **Phase 1 Acceptance Criteria** → use as the authoritative definition of done; each task's acceptance criteria must be traceable to at least one criterion listed here.
-- **Phase 1 Per-Agent Directives** targeting the Tasks Agent → treat as authoritative; apply when structuring task order and test scaffolding.
-- **Phase 2 Integration Points** → use when defining task boundaries and file assignments.
-
-If the file does not exist, continue — context.md is produced by upstream agents.
-
----
-
 ## Process
 
 ### Phase 1 — Load context
@@ -91,9 +79,27 @@ Organize tasks so that:
 - Each task is a functional, testable deliverable
 - Dependencies come before dependents (no circular deps)
 - Each task includes unit + integration tests
-- Maximum 10 main tasks (X.0 format)
+- Target task count: at least one task per FR-XX requirement, plus 1–2 tasks for scaffold and integration. Typical range: `fr_count + 1` to `fr_count × 2`. Do NOT hardcap at 10 — a feature with 8 FRs may legitimately need 10–12 tasks.
 - Subtasks use X.Y format
 - Target audience: junior developers — be explicit and unambiguous
+
+### Task Sizing Rules (Mandatory)
+- **Minimum cohesion:** Each task must deliver at least one unit of testable behavior — a working function, hook, component, or data operation. Tasks that contain ONLY type definitions, interfaces, or empty stubs are too granular; merge them with the next logical layer (e.g., merge a types-only task into the domain-logic task that first uses those types; merge an API-types file into the data-fetch task).
+- **File count limit:** Each task must touch ≤4-5 NEW source files (excluding config/infra stubs).
+  Scaffolding tasks may exceed this if files are small stubs (e.g., initial migration files).
+  Any task requiring >6 new `src/` files should be split immediately.
+- **Layer-first decomposition:** Do not bundle domain types, business logic, UI components,
+  and hooks in a single task. Organize strictly by layer:
+    1. Scaffold (type definitions, constants, migrations) — merge types into the layer that first uses them unless shared across 3+ layers
+    2. Domain logic (`src/domain/`)
+    3. Data persistence (`src/data/`)
+    4. Hooks (`src/hooks/`)
+    5. UI components (`src/components/`) — max 1-2 per task
+    6. Integration & routing — last
+- **Unit tests are mandatory in the implementation task:** A dedicated test-only final task
+  is an anti-pattern. Each task must include inline unit tests authored in the same task.
+  Tests are not deferred to a later task.
+  Exception: a dedicated E2E test task is allowed only if the TechSpec has an explicit dedicated testing section that defines it as a separate phase (a bare mention of Playwright or E2E in the TechSpec does NOT qualify).
 
 ### APPROVAL GATE
 Present the high-level task list to the user BEFORE generating any files:

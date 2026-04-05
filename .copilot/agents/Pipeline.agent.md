@@ -5,7 +5,7 @@ argument-hint: 'any description, path/to/spec.md, or free-form text — add --au
 model: Claude Sonnet 4.6
 target: vscode
 user-invocable: true
-agents: [Prompt Refiner Agent, Classifier Agent, PRD Agent, TechSpec Agent, Tasks Agent, Task Implementation Agent, QA Agent, Bugfix Agent]
+agents: [Classifier Agent, PRD Agent, TechSpec Agent, Tasks Agent, Task Implementation Agent, QA Agent, Bugfix Agent]
 ---
 
 # Feature Development Pipeline Orchestrator
@@ -25,8 +25,6 @@ You are an orchestrator. Coordinate the following specialized agents to take a f
 
 **Step 4 — Description:** Use the full resolved content (after removing `--auto`/`-y`) as the description. Pass it verbatim to all downstream agents — do not truncate or summarize.
 
-**Step 5 — Refined input tracking:** Initialize `refined_input_path = null`. This variable is set in Phase -0.5 if Prompt Refinement succeeds.
-
 ---
 
 ## CRITICAL RULES
@@ -43,34 +41,11 @@ You are an orchestrator. Coordinate the following specialized agents to take a f
 
 ---
 
-## PHASE -0.5 — Prompt Refinement
-
-Invoke the **Prompt Refiner Agent** with:
-```
-{feature-name}: {description}
-```
-
-Wait for it to finish.
-
-Check that `tasks/prd-{feature}/refined-prompt.md` exists and is non-empty.
-- If it exists: set `refined_input_path = tasks/prd-{feature}/refined-prompt.md`. All downstream agents (Phase 0 and Phase 1) will receive this path instead of the raw description.
-- If it does not exist: log a warning and continue using `{description}` for all phases:
-  > ⚠️ Prompt Refiner did not produce output. Proceeding with original input — downstream agents will receive the unrefined description.
-
-**APPROVAL GATE — Refined Prompt (skip if `interactive_mode = false`):**
-If `refined_input_path` was set, read and display the refined prompt to the user. Ask:
-> "Refined prompt saved at `tasks/prd-{feature}/refined-prompt.md`. Review it — all downstream agents will receive this as their input. Proceed? (yes / skip)"
->
-> - yes → proceed with refined-prompt.md
-> - skip → proceed with original description (ignore refined-prompt.md, set `refined_input_path = null`)
-
----
-
 ## PHASE 0 — Prompt Classification
 
 Invoke the **Classifier Agent** with:
 ```
-{refined_input_path if set, otherwise: "{feature-name}: {description}"}
+{feature-name}: {description}
 ```
 
 Wait for it to finish. Check that `tasks/prd-{feature}/user-context.md` exists.
@@ -83,7 +58,7 @@ If missing: continue to Phase 1 with this note to the user:
 
 Invoke the **PRD Agent** with:
 ```
-{refined_input_path if set, otherwise: "{feature-name}: {description}"}
+{feature-name}: {description}
 ```
 
 Wait for it to finish. Then verify `tasks/prd-{feature}/prd.md` exists and is non-empty. If missing, stop:
@@ -128,12 +103,53 @@ If either check fails, stop with an appropriate error message.
 
 Read `tasks/prd-{feature}/tasks.md` and present the full task list to the user.
 
-**APPROVAL GATE:** Ask the user:
+**Pre-gate validation:** Before presenting the approval prompt, count:
+- `fr_count` = number of FR-XX items in `tasks/prd-{feature}/prd.md`
+- `task_count` = number of tasks listed in `tasks/prd-{feature}/tasks.md`
+
+Always display the ratio before the approval prompt:
+```
+📋 Task plan: {task_count} tasks for {fr_count} functional requirements.
+```
+
+If `task_count < fr_count`, display a warning (too few tasks — likely over-bundling):
+```
+⚠️ Warning: {task_count} tasks for {fr_count} FRs — fewer tasks than requirements suggests over-bundling.
+    Consider requesting more granular decomposition (target: {fr_count}–{fr_count * 2} tasks).
+```
+
+If `task_count > fr_count * 3` AND `fr_count >= 3`, display a warning (too many tasks — likely over-splitting):
+```
+⚠️ Warning: {task_count} tasks for {fr_count} FRs — more than 3× the FR count suggests over-splitting.
+    Consider merging tasks that only define types or empty stubs with the layer that uses them.
+```
+
+**APPROVAL GATE (3-option with revision loop, max 2 revision cycles):**
+
+Initialize `revision_attempt = 0`.
+
+Ask the user:
 > "The task list above will now be implemented one task at a time. Each task runs in an isolated git worktree with a fresh context window, and must pass all tests and a code review before the next task starts. After each task is approved, its branch is merged to main so the next task builds on it.
 >
-> Proceed with implementation? (yes / no)"
+> How would you like to proceed?
+> - **yes** — proceed to Phase 4 implementation
+> - **revise: {feedback}** — re-run the Tasks Agent with your feedback (revision {revision_attempt+1}/2)
+> - **no** — stop (planning artifacts remain in `tasks/prd-{feature}/` for future use)"
 
-If no: stop. Planning artifacts remain in `tasks/prd-{feature}/` for future use.
+Process the response:
+- **yes** — proceed to Phase 4.
+- **no** — stop. Planning artifacts remain in `tasks/prd-{feature}/` for future use.
+- **revise: {feedback}** — execute the revision loop:
+  - If `revision_attempt >= 2`: tell the user "Maximum of 2 revision cycles reached. Accept the current task list (yes) or stop (no)." Re-prompt with only yes/no options.
+  - Otherwise: increment `revision_attempt`. Re-invoke the **Tasks Agent** with:
+    ```
+    tasks/prd-{feature}/prd.md tasks/prd-{feature}/techspec.md
+    
+    **REVISION {revision_attempt}:** User feedback: {feedback}
+    ```
+  - Wait for the agent to finish. Re-run pre-gate validation with updated counts.
+  - Display the updated task list with "(revision {revision_attempt})" label and new vs. previous task count.
+  - Loop back to the APPROVAL GATE prompt.
 
 ---
 

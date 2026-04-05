@@ -50,7 +50,8 @@ Read the full input and identify every fragment of information. Assign each frag
 |---|---|---|
 | PRD | `hints/prd-hints.md` | Problem description, user needs, scope boundaries, goals, success criteria, what to include or exclude from the feature |
 | TechSpec | `hints/techspec-hints.md` | Technology choices, library preferences, architecture constraints, data model hints, infrastructure decisions |
-| Tasks | `hints/tasks-hints.md` | Test setup guidance, mocking strategies, test scenarios to cover, environment setup instructions |
+| Tasks | `hints/tasks-hints.md` | Test setup guidance, mocking strategies, test scenarios to cover, environment setup instructions, task granularity guidance, layer decomposition advice, recommended task count, testing strategy (inline per-task vs. final test task) |
+| Task Decomposition Guidance | `hints/tasks-hints.md` | Content from `## Task Decomposition Guidance` section in refined-prompt.md — task count range, layer-based structure, inline testing strategy |
 | Review | `hints/review-hints.md` | Quality gates, things to flag or reject, feature-specific coding conventions, security requirements |
 | Skills | `hints/skills.md` | Explicit skill references: "use skill X", "skill `X`", "using skill X", "apply skill X", or any instruction to apply a named skill |
 | Agent Instructions → PRD | `hints/prd-hints.md` | Content from a `## Agent Instructions > ### PRD Agent` section (e.g., from a refined-prompt.md) |
