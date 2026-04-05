@@ -65,18 +65,6 @@ Output a brief summary before proceeding:
 
 ---
 
-## Step 0.5 — Feature Context
-
-If `tasks/prd-{feature}/context.md` exists, read it now.
-Extract and apply:
-- **Phase 1 Acceptance Criteria** → use as the authoritative definition of done; each task's acceptance criteria must be traceable to at least one criterion listed here.
-- **Phase 1 Per-Agent Directives** targeting the Tasks Agent → treat as authoritative; apply when structuring task order and test scaffolding.
-- **Phase 2 Integration Points** → use when defining task boundaries and file assignments.
-
-If the file does not exist, continue — context.md is produced by upstream agents.
-
----
-
 ## Process
 
 ### Phase 1 — Load context
@@ -105,6 +93,23 @@ Organize tasks so that:
 - Maximum 10 main tasks (X.0 format)
 - Subtasks use X.Y format
 - Target audience: junior developers — be explicit and unambiguous
+
+### Task Sizing Rules (Mandatory)
+- **File count limit:** Each task must touch ≤4-5 NEW source files (excluding config/infra stubs).
+  Scaffolding tasks may exceed this if files are small stubs (e.g., initial migration files).
+  Any task requiring >6 new `src/` files should be split immediately.
+- **Layer-first decomposition:** Do not bundle domain types, business logic, UI components,
+  and hooks in a single task. Organize strictly by layer:
+    1. Scaffold (type definitions, constants, migrations)
+    2. Domain logic (`src/domain/`)
+    3. Data persistence (`src/data/`)
+    4. Hooks (`src/hooks/`)
+    5. UI components (`src/components/`) — max 1-2 per task
+    6. Integration & routing — last
+- **Unit tests are mandatory in the implementation task:** A dedicated test-only final task
+  is an anti-pattern. Each task must include inline unit tests authored in the same task.
+  Tests are not deferred to a later task.
+  Exception: a dedicated E2E test task is allowed only if the TechSpec explicitly defines it.
 
 ### APPROVAL GATE
 Present the high-level task list to the user BEFORE generating any files:
